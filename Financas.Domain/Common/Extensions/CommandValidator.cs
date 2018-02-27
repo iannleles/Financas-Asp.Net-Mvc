@@ -1,0 +1,76 @@
+﻿using FluentValidation;
+using FluentValidation.Validators;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Financas.Domain.Common.Extensions
+{
+    public class CPFValidator<T> : PropertyValidator
+    {
+
+        public CPFValidator()
+            : base("Property {PropertyName} CPF inválido!")
+        {
+
+        }
+
+        protected override bool IsValid(PropertyValidatorContext context)
+        {
+            string cpf = context.PropertyValue.ToString();
+            cpf = cpf.Trim();
+            cpf = cpf.Replace(".", "").Replace("-", "");
+
+            long cpfNumero;
+            bool cpfIsNumeric = long.TryParse(cpf, out cpfNumero);
+
+            if (!cpfIsNumeric)
+            {
+                return false;
+            }
+
+            while (cpf.Length < 11)
+                cpf = "0" + cpf;
+
+            var multiplicador1 = new[] { 10, 9, 8, 7, 6, 5, 4, 3, 2 };
+            var multiplicador2 = new[] { 11, 10, 9, 8, 7, 6, 5, 4, 3, 2 };
+            if (cpf.Length != 11)
+            {
+                return false;
+            }
+
+            var tempCpf = cpf.Substring(0, 9);
+            var soma = 0;
+
+            for (var i = 0; i < 9; i++)
+                soma += int.Parse(tempCpf[i].ToString()) * multiplicador1[i];
+            var resto = soma % 11;
+            if (resto < 2)
+                resto = 0;
+            else
+                resto = 11 - resto;
+            var digito = resto.ToString();
+            tempCpf = tempCpf + digito;
+            soma = 0;
+            for (var i = 0; i < 10; i++)
+                soma += int.Parse(tempCpf[i].ToString()) * multiplicador2[i];
+            resto = soma % 11;
+            if (resto < 2)
+                resto = 0;
+            else
+                resto = 11 - resto;
+            digito = digito + resto;
+            return cpf.EndsWith(digito);
+        }
+    }
+
+    public static class DomainValidators
+    {
+        public static IRuleBuilderOptions<T, string> CPF<T>(this IRuleBuilder<T, string> ruleBuilder)
+        {
+            return ruleBuilder.SetValidator(new CPFValidator<T>());
+        }
+    }
+}

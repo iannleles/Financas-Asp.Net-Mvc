@@ -1,0 +1,348 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Content/DataTables/css/dataTables.bootstrap.min.css")">
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/jquery.validate.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/jquery.dataTables.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/dataTables.bootstrap.min.js")"></script>
+
+<link href="@Url.Content("~/Scripts/bootstrap_dialog/bootstrap-dialog.min.css")" rel="stylesheet" />
+@*<link href="@Url.Content("~/Scripts/bootstrap_dialog/prettify.css")" rel="stylesheet" />
+<script src="@Url.Content("~/Scripts/bootstrap_dialog/run_prettify.min.js")"></script>*@
+<script src="@Url.Content("~/Scripts/script.helper.js")"></script>
+<script src="@Url.Content("~/Scripts/bootstrap_dialog/bootstrap-dialog.min.js")"></script>
+<script src="@Url.Content("~/Scripts/bootstrap-select.min.js")"></script>
+<link href="@Url.Content("~/Content/bootstrap-select.min.css")" rel="stylesheet" />
+
+<script type="text/javascript">
+
+
+    var save_method; //for save method string
+    var table;
+
+    $(document).ready(function () {
+
+         $('#categoriaPrincipal').on('changed.bs.select', function (e) {
+            $("#exibeRemoveSelecao").show();
+        });
+
+        $("#formCadastro").keypress(function (e) {
+            if ((e.keyCode == 13) && (e.target.type != "textarea")) {
+                $('#formCadastro').valid();
+                return false;
+            }
+        });
+
+        $("#formCadastro").validate({
+            rules: {
+                nomeCategoria: "required"
+            },
+            messages: {
+                nomeCategoria: "Por favor entre com o nome da categoria"
+            },
+            errorElement: "div",
+            wrapper: "div",
+            errorPlacement: function (error, element) {
+                offset = element.offset();
+                error.insertAfter(element)
+                error.css('color', 'red');
+            }
+
+        });
+
+
+        table = $("#tblCategorias").DataTable({
+
+            "sAjaxSource": '@Url.Content("~/Categoria/Processar?_tipoCategoria=D")',
+            "bServerSide": true,
+            "aoColumns": [
+                {
+                    "render": function (data, type, row, meta) {
+                        var a = '<a class="btn btn-sm btn-primary" href="javascript:void(0)" title="Edit" onclick="editar_categoria(' + row.CategoriaId + ')"><i class="glyphicon glyphicon-pencil"></i> Editar</a> <a class="btn btn-sm btn-danger" href="javascript:void(0)" title="Hapus" onclick="excluir_categoria(' + row.CategoriaId + ')"><i class="glyphicon glyphicon-trash"></i> Excluir</a>';
+                        return a;
+                    }, "sWidth": "12%", "orderable": false
+                },
+                { "mData": "CategoriaNome", "sWidth": "30%" },
+                { "mData": "CategoriaPaiDescricao", "sWidth": "30%" }  
+            ],
+            language: {
+                "sEmptyTable": "Nenhum registro encontrado",
+                "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+                "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
+                "sInfoFiltered": "(Filtrados de _MAX_ registros)",
+                "sInfoPostFix": "",
+                "sInfoThousands": ".",
+                "sLengthMenu": "_MENU_ resultados por página",
+                "sLoadingRecords": "Carregando...",
+                "sProcessing": "Processando...",
+                "sZeroRecords": "Nenhum registro encontrado",
+                "sSearch": "Pesquisar",
+                "oPaginate": {
+                    "sNext": "Próximo",
+                    "sPrevious": "Anterior",
+                    "sFirst": "Primeiro",
+                    "sLast": "Último"
+                },
+                "oAria": {
+                    "sSortAscending": ": Ordenar colunas de forma ascendente",
+                    "sSortDescending": ": Ordenar colunas de forma descendente"
+                }
+            }
+        });
+
+        $("#tblCategorias").css("width", "100%");
+
+        $("#tblCategorias_paginate").removeClass("dataTables_paginate paging_simple_numbers");
+
+        $('#btnSalvar').click(function () {
+
+            salvarCategoria();
+
+        });
+
+        $('#btnIncluirCategoria').click(function () {
+
+            $('#modal_form').modal('show'); // show bootstrap modal
+            NovoRegistro();
+
+        });
+
+
+    });
+
+    function loadCategorias() {
+
+        $("#categoriaPrincipal").html("");
+        var response = "";
+
+        //Ajax Load data from ajax
+        $.ajax({
+            url: '@Url.Action("ListarCategoriasPorTipo", "Categoria")',
+            data: { tipoCategoria: "D" },
+            type: "GET",
+            dataType: "JSON",
+            success: function (data) {
+                $.each(data, function (key, item) {
+                    response = response.concat("<option value=" + item.CategoriaId + ">" + item.CategoriaNome + "</option>");
+                }); //each
+
+                $("#categoriaPrincipal").append(response);
+                $('#categoriaPrincipal').selectpicker('refresh');
+            }
+        });
+    }
+
+
+    function NovoRegistro() {
+        save_method = 'add';
+
+        $('.modal-title').text('Nova Categoria - Despesa'); // Set Title to Bootstrap modal title
+
+        $('#idCategoria').val("");
+        $('#nomeCategoria').val("");
+        $('#categoriaPrincipal').selectpicker('deselectAll');
+        $("#exibeRemoveSelecao").hide();
+
+        loadCategorias();
+    }
+
+
+    function salvarCategoria() {
+        if ($('#formCadastro').valid()) {  //call valid for form2 and show the errors
+
+            $('#btnSalvar').text('Salvando...'); //change button text
+            $('#btnSalvar').attr('disabled', true); //set button disable
+
+            var dadosFormulario = $("#formCadastro").serialize();
+
+            $.ajax({
+                url: '@Url.Action("SalvarCategoria", "Categoria")',
+                type: "POST",
+                data: dadosFormulario,
+                dataType: "JSON",
+                success: function (data) {
+
+                    if (data.success) //if success close modal and reload ajax table
+                    {
+                        exibeMensagem(data.responseText);
+                        $('#modal_form').modal('hide');
+                        reload_table();
+                    } else {
+                        exibeMensagem(data.responseText);
+                    }
+
+
+                    $('#btnSalvar').text('Salvar'); //change button text
+                    $('#btnSalvar').attr('disabled', false); //set button enable
+
+
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert('Erro ao incluir / atualizar dados');
+                    $('#btnSalvar').text('Salvar'); //change button text
+                    $('#btnSalvar').attr('disabled', false); //set button enable
+
+                }
+            });
+
+        }
+    }
+
+    function excluir_categoria(id) {
+        if (confirm('Confirma a exclusão?')) {
+            // ajax delete data to database
+            $.ajax({
+                url: '@Url.Action("ExcluirCategoria", "Categoria")',
+                data: { idCategoria: id, tipoCategoria: 'D'},
+                type: "POST",
+                dataType: "JSON",
+                success: function (data) {
+
+                    $('#modal_form').modal('hide');
+
+                    if (data.success) //if success close modal and reload ajax table
+                    {
+                        exibeMensagem(data.responseText);
+                        reload_table();
+                    }
+                    else {
+                        exibeMensagem(data.responseText);
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert('Error deleting data');
+                }
+            });
+
+        }
+    }
+
+
+    function editar_categoria(idCategoria) {
+        save_method = 'update';
+        $('#formCadastro')[0].reset(); // reset form on modals
+
+        loadCategorias();
+
+        //Ajax Load data from ajax
+        $.ajax({
+            url: '@Url.Action("ObterCategoria", "Categoria")',
+            data: { id: idCategoria },
+            type: "GET",
+            dataType: "JSON",
+            success: function (data) {
+
+                $('[name="idCategoria"]').val(data.CategoriaId);
+                $('[name="nomeCategoria"]').val(data.CategoriaNome);
+                $('#modal_form').modal('show'); // show bootstrap modal when complete loaded
+                $('.modal-title').text('Editar Categoria - Despesa'); // Set title to Bootstrap modal title
+
+
+                if (data.CategoriaPaiId != "" && data.CategoriaPaiId != null) {
+                    $('#categoriaPrincipal').selectpicker('val', data.CategoriaPaiId);
+                    $("#exibeRemoveSelecao").show();
+                }
+                else {
+                    $("#exibeRemoveSelecao").hide();
+                }
+
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                alert('Error get data from ajax');
+            }
+        });
+    }
+
+    function reload_table() {
+        table.ajax.reload();
+    }
+
+    function removeSelecaoCategoria() {
+        $('#categoriaPrincipal').selectpicker('deselectAll');
+        $("#exibeRemoveSelecao").hide();
+    }
+
+</script>
+
+<!-- /top tiles -->
+<div class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+        <div class="dashboard_graph">
+
+
+            <div class="container">
+
+                <div class="row m-t-10">
+                    <div class="col-md-12">
+                        <div class="form-group">
+
+                            <div class="col-sm-6">
+
+                                <h3><i class="fa fa-table"></i> Categorias</h3>
+                            </div>
+
+                            <div class="col-sm-6">
+                                <div class="pull-right m-t-0"><span class="btn btn-danger"><i class="glyphicon glyphicon-minus"></i> Despesas</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br />
+                <button class="btn btn-default" name="btnIncluirCategoria" id="btnIncluirCategoria"><i class="glyphicon glyphicon-plus"></i> Nova Categoria</button>
+                <br />
+                <table id="tblCategorias" class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th style="width:125px;">Acão</th>
+                            <th>Nome</th>
+                            <th>Categoria Principal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyTable"></tbody>
+                </table>
+            </div>
+
+            <!-- Bootstrap modal -->
+            <div class="modal fade" id="modal_form" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form id="formCadastro" name="formCadastro" class="form-horizontal" novalidate="novalidate">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                <h3 class="modal-title">Categoria - Despesa</h3>
+                            </div>
+                            <div class="modal-body form">
+                                <input type="hidden" value="" name="idCategoria" id="idCategoria" />
+                                <input type="hidden" value="D" name="tipoCategoria" id="tipoCategoria" />
+                                <div class="form-body">
+                                    <div class="form-group">
+                                        <label class="control-label col-md-4" for="nomeCategoria">Nome</label>
+                                        <div class="col-md-8">
+                                            <input name="nomeCategoria" id="nomeCategoria" placeholder="Nome da categoria" class="form-control" type="text">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label col-md-4" for="categoriaPrincipal">Categoria Principal</label>
+                                        <div class="col-md-8">
+                                            <div class="form-group">
+                                                <select name="categoriaPrincipal" id="categoriaPrincipal" class="selectpicker" data-live-search="true" data-width="auto" title=" ">
+                                                </select>
+                                                <a href="#" id="exibeRemoveSelecao" onclick="removeSelecaoCategoria()" style="display:none"><i class="glyphicon glyphicon-remove"></i></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" id="btnSalvar" name="btnSalvar" value="Salvar" class="btn btn-primary">Salvar</button>
+                                <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

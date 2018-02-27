@@ -1,0 +1,167 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{E02CB188-1FD4-47E2-9B55-7958CC5FBF7A}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Financas.Domain</RootNamespace>
+    <AssemblyName>Financas.Domain</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="FluentValidation, Version=6.2.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentValidation.6.2.1.0\lib\Net45\FluentValidation.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Common\Extensions\BooleanExtensions.cs" />
+    <Compile Include="Common\Extensions\CommandValidator.cs" />
+    <Compile Include="Common\Specifications\AndSpecification.cs" />
+    <Compile Include="Common\Specifications\CompositeSpecificationBase.cs" />
+    <Compile Include="Common\Specifications\ISpecification.cs" />
+    <Compile Include="Common\Specifications\NotSpecification.cs" />
+    <Compile Include="Common\Specifications\OrSpecification.cs" />
+    <Compile Include="Common\Specifications\ParameterRebinder.cs" />
+    <Compile Include="Common\Specifications\SpecificationBase.cs" />
+    <Compile Include="Common\Specifications\SpecificationExtensions.cs" />
+    <Compile Include="Contracts\Repositories\Common\IGenericRepository.cs" />
+    <Compile Include="Contracts\Repositories\ICategoriaRepository.cs" />
+    <Compile Include="Contracts\Repositories\IDespesaRepository.cs" />
+    <Compile Include="Contracts\Repositories\ILancamentoRepository.cs" />
+    <Compile Include="Contracts\Repositories\IOrcamentoRepository.cs" />
+    <Compile Include="Contracts\Repositories\IUsuarioRepository.cs" />
+    <Compile Include="Contracts\Services\IAutenticacaoAppService.cs" />
+    <Compile Include="Contracts\Services\ICategoriaAppService.cs" />
+    <Compile Include="Contracts\Services\IDashboardAppService.cs" />
+    <Compile Include="Contracts\Services\IDespesaAppService.cs" />
+    <Compile Include="Contracts\Services\ILancamentoAppService.cs" />
+    <Compile Include="Contracts\Services\IOrcamentoAppService.cs" />
+    <Compile Include="Contracts\Services\IRelatorioAppService.cs" />
+    <Compile Include="Contracts\Services\IUsuarioAppService.cs" />
+    <Compile Include="Contracts\Repositories\Common\IUnitOfWork.cs" />
+    <Compile Include="Dtos\CategoriaDTO.cs" />
+    <Compile Include="Dtos\DashboardDTO.cs" />
+    <Compile Include="Dtos\DashboardDiarioDTO.cs" />
+    <Compile Include="Dtos\DashboardHomeDTO.cs" />
+    <Compile Include="Dtos\DashboardAnosDTO.cs" />
+    <Compile Include="Dtos\DashboardMesesDTO.cs" />
+    <Compile Include="Dtos\DashboardPrevistoRealizadoDTO.cs" />
+    <Compile Include="Dtos\DespesaDTO.cs" />
+    <Compile Include="Dtos\LancamentoDTO.cs" />
+    <Compile Include="Dtos\OrcamentoDTO.cs" />
+    <Compile Include="Dtos\RelatorioLancamentosPorMesesDTO.cs" />
+    <Compile Include="Dtos\RelatorioLancamentosPorPeriodoDTO.cs" />
+    <Compile Include="Dtos\LancamentoMensalDTO.cs" />
+    <Compile Include="Dtos\RelatorioPrevistoRealizadoDTO.cs" />
+    <Compile Include="Dtos\UsuarioDTO.cs" />
+    <Compile Include="Entities\Categoria.cs" />
+    <Compile Include="Entities\Despesa.cs" />
+    <Compile Include="Entities\Lancamento.cs" />
+    <Compile Include="Entities\Orcamento.cs" />
+    <Compile Include="Entities\Usuario.cs" />
+    <Compile Include="Resources\CategoriaResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>CategoriaResources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Resources\DespesaResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>DespesaResources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Resources\UsuarioResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>UsuarioResources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Specs\CategoriaSpecs\CategoriaPorIdExato.cs" />
+    <Compile Include="Specs\CategoriaSpecs\CategoriaPorIdPai.cs" />
+    <Compile Include="Specs\CategoriaSpecs\CategoriaPorNomeExato.cs" />
+    <Compile Include="Specs\CategoriaSpecs\CategoriaPorPorIdDiferente.cs" />
+    <Compile Include="Specs\CategoriaSpecs\CategoriaPorTipo.cs" />
+    <Compile Include="Specs\CategoriaSpecs\CategoriaPorUsuarioValido.cs" />
+    <Compile Include="Specs\DespesaSpecs\DespesaPorDescricaoExato.cs" />
+    <Compile Include="Specs\DespesaSpecs\DespesaPorUsuario.cs" />
+    <Compile Include="Specs\DespesaSpecs\DespesaPorIdCategoria.cs" />
+    <Compile Include="Specs\DespesaSpecs\DespesaPorPorIdDiferente.cs" />
+    <Compile Include="Specs\LancamentoSpecs\LancamentoPorIdCategoria.cs" />
+    <Compile Include="Specs\LancamentoSpecs\LancamentosPorUsuarioAnoInicialFinal.cs" />
+    <Compile Include="Specs\LancamentoSpecs\LancamentosPorUsuarioAnoMes.cs" />
+    <Compile Include="Specs\LancamentoSpecs\LancamentosPorUsuarioAnual.cs" />
+    <Compile Include="Specs\LancamentoSpecs\LancamentosPorUsuarioPeriodo.cs" />
+    <Compile Include="Specs\LancamentoSpecs\LancamentosPorUsuarioTipoMenorData.cs" />
+    <Compile Include="Specs\OrcamentoSpecs\OrcamentoPorIdCategoria.cs" />
+    <Compile Include="Specs\OrcamentoSpecs\OrcamentosPorUsuarioAnoMes.cs" />
+    <Compile Include="Validators\CategoriaValidator.cs" />
+    <Compile Include="Enums\Tipo.cs" />
+    <Compile Include="Validators\DespesaValidator.cs" />
+    <Compile Include="Validators\LancamentoValidator.cs" />
+    <Compile Include="Validators\OrcamentoValidator.cs" />
+    <Compile Include="Validators\UsuarioValidator.cs" />
+    <Compile Include="ValueObjects\SortField.cs" />
+    <Compile Include="ValueObjects\SortFieldDirection.cs" />
+    <Compile Include="ValueObjects\SortRequest.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Specs\CategoriaSpecs\CategoriaPorTipoNomeUsuario.cs" />
+    <Compile Include="Specs\CategoriaSpecs\CategoriaPorTipoUsuario.cs" />
+    <Compile Include="Specs\CategoriaSpecs\CategoriaPorUsuario.cs" />
+    <Compile Include="Specs\UsuarioSpecs\UsuarioAtivoPorEmaileSenha.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Aggregates\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\CategoriaResources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>CategoriaResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\DespesaResources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>DespesaResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\UsuarioResources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>UsuarioResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

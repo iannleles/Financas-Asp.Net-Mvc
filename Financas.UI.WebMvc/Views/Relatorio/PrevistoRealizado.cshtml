@@ -1,0 +1,451 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Scripts/bootstrap_datetimepicker/css/bootstrap-datetimepicker.css")">
+<script type="text/javascript" src="@Url.Content("~/Scripts/bootstrap_datetimepicker/js/moment-with-locales.js")"></script>
+<script type="text/javascript" src="@Url.Content("~/Scripts/bootstrap_datetimepicker/js/bootstrap-datetimepicker.js")"></script>
+
+
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Content/DataTables/css/dataTables.bootstrap.min.css")">
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Content/DataTables/css/jquery.dataTables.min.css")">
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Content/DataTables/css/buttons.dataTables.css")">
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/jquery.dataTables.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/dataTables.bootstrap.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/dataTables.buttons.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/buttons.flash.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/jszip/2.5.0/jszip.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/pdfmake/0.1.18/pdfmake.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/pdfmake/0.1.18/vfs_fonts.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/buttons.html5.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/buttons.print.min.js")"></script>
+
+<script src="@Url.Content("~/Scripts/script.helper.js")"></script>
+<script src="@Url.Content("~/Scripts/bootstrap_dialog/bootstrap-dialog.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/jquery.mask.js")"></script>
+
+<script src="@Url.Content("~/Scripts/bootstrap-select.min.js")"></script>
+<link href="~/Content/bootstrap-select.min.css" rel="stylesheet" />
+
+<style media="all" type="text/css">
+    .alignCenter {
+        text-align: center;
+    }
+
+    #tblOrcamentos tr td {
+        height: 5px;
+    }
+
+    .btn {
+        margin-bottom: 0px;
+    }
+
+    span.arrow {
+        margin-left: 6px;
+        height: 17px;
+    }
+
+    label.error {
+        margin-left: 9px;
+        padding: 1px 5px 0px 5px;
+        font-size: small;
+    }
+
+    tr.groupPai,
+    tr.groupPai:hover {
+        background-color: #737375 !important;
+    }
+
+    tr.group,
+    tr.group:hover {
+        background-color: #ddd !important;
+    }
+</style>
+
+<script>
+    var table;
+
+    $(document).ready(function () {
+
+        $('#modal_form').on('hidden.bs.modal', function () {
+            reload_table();
+        })
+
+        //$("#menuAtivo").html("<font size='4px'><b>Orçamento</b></font>");
+
+        $('#datetimepicker').datetimepicker({
+            viewMode: 'years',
+            format: 'YYYY'
+        }).on('dp.update', function (ev) {
+
+            var ano = $("#ano").val();
+
+            var mes = $("#mesCorrente").val();
+
+            RefreshTable('#tblOrcamentos', "@Url.Content("~/Relatorio/ProcessarPrevistoRealizado?ano=")" + ano + '&mes=' + mes);
+
+        });
+
+        SetValoresPadrao();
+
+        Number.prototype.formatMoney = function (c, d, t) {
+            var n = this, c = isNaN(c = Math.abs(c)) ? 2 : c, d = d == undefined ? "," : d, t = t == undefined ? "." : t, s = n < 0 ? "-" : "", i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", j = (j = i.length) > 3 ? j % 3 : 0;
+            return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+        };
+
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            var ano = $("#ano").val();
+            var mes = $(e.target).attr("data-target");
+
+            $("#mesCorrente").val(mes);
+
+            RefreshTable('#tblOrcamentos', "@Url.Content("~/Relatorio/ProcessarPrevistoRealizado?ano=")" + ano + '&mes=' + mes);
+
+        });
+
+    });
+
+    function RefreshTable(tableId, urlData) {
+        $.getJSON(urlData, null, function (json) {
+            table = $(tableId).dataTable();
+            oSettings = table.fnSettings();
+
+            CarregarSomatorias(json.iTotalReceitasPrevisto,
+                                       json.iTotalReceitasRealizado,
+                                       json.iTotalReceitasDiferenca,
+                                       json.iTotalDespesasPrevisto,
+                                       json.iTotalDespesasRealizado,
+                                       json.iTotalDespesasDiferenca,
+                                       json.iSaldoMensalPrevisto,
+                                       json.iSaldoMensalRealizado,
+                                       json.iSaldoMensalDiferenca,
+                                       json.iSaldoInicioMesRealizado,
+                                       json.iSaldoFinalMesRealizado);
+
+            table.fnClearTable(this);
+
+            for (var i = 0; i < json.aaData.length; i++) {
+                table.oApi._fnAddData(oSettings, json.aaData[i]);
+            }
+
+            oSettings.aiDisplay = oSettings.aiDisplayMaster.slice();
+            table.fnDraw();
+        });
+    }
+
+   
+    function CarregarSomatorias(totalReceitasPrevisto, 
+                                    totalReceitasRealizado, 
+                                    totalReceitasDiferenca, 
+                                    totalDespesasPrevisto,  
+                                    totalDespesasRealizado, 
+                                    totalDespesasDiferenca, 
+                                    saldoMensalPrevisto, 
+                                    saldoMensalRealizado, 
+                                    saldoMensalDiferenca,
+                                    saldoInicioMesRealizado, 
+                                    saldoFinalMesRealizado) {
+
+        $("#totalReceitasPrevisto").html(totalReceitasPrevisto.formatMoney(2, ',', '.'));
+        $("#totalReceitasRealizado").html(totalReceitasRealizado.formatMoney(2, ',', '.'));
+        $("#totalReceitasDiferenca").html(totalReceitasDiferenca.formatMoney(2, ',', '.'));
+
+        $("#totalDespesasPrevisto").html(totalDespesasPrevisto.formatMoney(2, ',', '.'));
+        $("#totalDespesasRealizado").html(totalDespesasRealizado.formatMoney(2, ',', '.'));
+        $("#totalDespesasDiferenca").html(totalDespesasDiferenca.formatMoney(2, ',', '.'));
+
+        $("#saldoMensalPrevisto").html(saldoMensalPrevisto.formatMoney(2, ',', '.'));
+        $("#saldoMensalRealizado").html(saldoMensalRealizado.formatMoney(2, ',', '.'));
+        $("#saldoMensalDiferenca").html(saldoMensalDiferenca.formatMoney(2, ',', '.'));
+
+        $("#saldoInicioMesRealizado").html(saldoInicioMesRealizado.formatMoney(2, ',', '.'));
+        $("#saldoFinalMesRealizado").html(saldoFinalMesRealizado.formatMoney(2, ',', '.'));
+
+
+    }
+
+    function CarregarGridOrcamentos(ano, mes) {
+
+        table = $("#tblOrcamentos").DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+
+                {
+                    extend: 'copy'
+                },
+                 {
+                     extend: 'csv',
+                     title: 'Previsto x Realizado'
+                 },
+                 {
+                     extend: 'excel',
+                     title: 'Previsto x Realizado'
+                 },
+                 {
+                     extend: 'pdf',
+                     orientation: 'landscape',
+                     pageSize: 'A4',
+                     title: 'Previsto x Realizado'
+                 },
+                 {
+                     extend: 'print',
+                     orientation: 'landscape',
+                     pageSize: 'A4',
+                     title: 'Previsto x Realizado'
+                 }
+            ],
+            "paging": false,
+            "ajax": {
+                "url": "@Url.Content("~/Relatorio/ProcessarPrevistoRealizado?ano=")" + ano + "&mes=" + mes,
+                "dataSrc": function (json) {
+
+                    CarregarSomatorias(json.iTotalReceitasPrevisto,
+                                       json.iTotalReceitasRealizado,
+                                       json.iTotalReceitasDiferenca,
+                                       json.iTotalDespesasPrevisto,
+                                       json.iTotalDespesasRealizado,
+                                       json.iTotalDespesasDiferenca,
+                                       json.iSaldoMensalPrevisto,
+                                       json.iSaldoMensalRealizado,
+                                       json.iSaldoMensalDiferenca,
+                                       json.iSaldoInicioMesRealizado,
+                                       json.iSaldoFinalMesRealizado);
+
+                    return json.aaData;
+                }
+            },
+            "iDisplayLength": "100",
+            "aoColumns": [
+                { "mData": "CategoriaPaiNome" },
+                { "mData": "CategoriaPaiTipo" },
+                { "mData": "CategoriaNome", "sWidth": "30%" },
+                {
+                    "render": function (data, type, row, meta) {
+                            return row.Previsto.formatMoney(2, ',', '.');
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+                {
+                    "render": function (data, type, row, meta) {
+                        return row.Realizado.formatMoney(2, ',', '.');
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+                {
+                    "render": function (data, type, row, meta) {
+                        return row.Diferenca.formatMoney(2, ',', '.');
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                }
+            ],
+            "columnDefs": [
+                { "visible": false, "targets": 0 },
+                { "visible": false, "targets": 1 }
+            ],
+            "order": [[ 1, 'desc' ]],  
+            "drawCallback": function (settings) {
+                var api = this.api();
+                var rows = api.rows({ page: 'current' }).nodes();
+                var last = null;
+                var mostraDespesa = 0;
+
+                api.column(0, { page: 'current' }).data().each(function (group, i) {
+                    if (last !== group) {
+                        if (group !== "Receitas" && mostraDespesa == 0) {
+                            $(rows).eq(i).before(
+                             '<tr><td colspan="4">&nbsp;</td></tr><tr class="groupPai"><td colspan="4"><font color="white"><b>DESPESAS<b></font></td></tr>'
+                            );
+                            mostraDespesa = 1;
+                        }
+                        if (group == "Receitas") {
+                            $(rows).eq(i).before(
+                            '<tr class="groupPai"><td colspan="4"><font color="white"><b>RECEITAS<b></font></td></tr>'
+                           );
+                        } else
+                        {
+                            $(rows).eq(i).before(
+                            '<tr class="group"><td colspan="4"><b>' + group + '<b></td></tr>'
+                            );
+                        }
+                        
+
+                        last = group;
+                    }
+                });
+            },
+            language: {
+                "sEmptyTable": "Nenhum registro encontrado",
+                "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+                "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
+                "sInfoFiltered": "(Filtrados de _MAX_ registros)",
+                "sInfoPostFix": "",
+                "sInfoThousands": ".",
+                "sLengthMenu": "_MENU_ resultados por página",
+                "sLoadingRecords": "Carregando...",
+                "sProcessing": "Processando...",
+                "sZeroRecords": "Nenhum registro encontrado",
+                "sSearch": "Pesquisar",
+                "oPaginate": {
+                    "sNext": "Próximo",
+                    "sPrevious": "Anterior",
+                    "sFirst": "Primeiro",
+                    "sLast": "Último"
+                },
+                "oAria": {
+                    "sSortAscending": ": Ordenar colunas de forma ascendente",
+                    "sSortDescending": ": Ordenar colunas de forma descendente"
+                }
+            }
+        });
+    }
+
+    function SetValoresPadrao() {
+
+        var data = new Date();
+        var mes = data.getMonth() + 1;
+        var ano = data.getFullYear();
+
+        $('#ano').val(ano);
+
+        tabActive = mes - 1;
+
+        $("#mesCorrente").val(mes);
+
+        $("#myTab li:eq(" + tabActive + ") a").tab('show');
+
+        CarregarGridOrcamentos(ano, mes);
+
+
+    }
+
+    function CarregarDadosAnoMes(ano, mes) {
+        $('#myTabContent').html("Ano: " + ano + " - Mes: " + mes);
+    }
+
+    function reload_table() {
+
+        var ano = $("#ano").val();
+
+        var mes = $("#mesCorrente").val();
+
+        RefreshTable('#tblOrcamentos', "@Url.Content("~/Relatorio/ProcessarPrevistoRealizado?ano=")" + ano + '&mes=' + mes);
+
+        //table.ajax.reload();
+    }
+
+</script>
+
+<!-- page content -->
+<div role="main">
+    <div class="">
+
+        <div class="clearfix"></div>
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="x_panel">
+                    <div class="x_title">
+
+                        <div class="col-sm-3">
+                            <h2><i class="fa fa-list-alt"></i> Relatório - Previsto x Realizado</h2>
+                        </div>
+
+
+                        <div class="col-sm-8" style="height:70px">
+                            <ul id="myTab" class="nav nav-tabs">
+                                <li class="" id="1"><a href="#" data-toggle="tab" data-target="1" style="font-size: 14px">Janeiro</a></li>
+                                <li class="" id="2"><a href="#" data-toggle="tab" data-target="2" style="font-size: 14px">Fevereiro</a></li>
+                                <li class="" id="3"><a href="#" data-toggle="tab" data-target="3" style="font-size: 14px; ">Marco</a></li>
+                                <li class="" id="4"><a href="#" data-toggle="tab" data-target="4" style="font-size: 14px">Abril</a></li>
+                                <li class="" id="5"><a href="#" data-toggle="tab" data-target="5" style="font-size: 14px">Maio</a></li>
+                                <li class="" id="6"><a href="#" data-toggle="tab" data-target="6" style="font-size: 14px">Junho</a></li>
+                                <li class="" id="7"><a href="#" data-toggle="tab" data-target="7" style="font-size: 14px">Julho</a></li>
+                                <li class="" id="8"><a href="#" data-toggle="tab" data-target="8" style="font-size: 14px">Agosto</a></li>
+                                <li class="" id="9"><a href="#" data-toggle="tab" data-target="9" style="font-size: 14px">Setembro</a></li>
+                                <li class="" id="10"><a href="#" data-toggle="tab" data-target="10" style="font-size: 14px">Outubro</a></li>
+                                <li class="" id="11"><a href="#" data-toggle="tab" data-target="11" style="font-size: 14px">Novembro</a></li>
+                                <li class="" id="12"><a href="#" data-toggle="tab" data-target="12" style="font-size: 14px">Dezembro</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-sm-1">
+                            <div class="form-group">
+                                <div class='input-group date' id='datetimepicker'>
+                                    <input type='text' id="ano" class="form-control" />
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar">
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="mesCorrente" value="" />
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <table id="tblOrcamentos" class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>CategoriaPai</th>
+                                    <th>CategoriaPaiTipo</th>
+                                    <th>CATEGORIA</th>
+                                    <th>PREVISTO (R$)</th>
+                                    <th>REALIZADO (R$)</th>
+                                    <th>DIFERENÇA (R$)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyTable"></tbody>
+                        </table><br />
+                        <div>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr style='background-color: #737375;'>
+                                        <th colspan="4"><font color="white"><b>RESUMO GERAL</b></font></th>
+                                    </tr>
+                                    <tr>
+                                        <th width="30%">&nbsp;</th>
+                                        <th width="15%" align="center"><div align="center"><font color="#73879C"><b>PREVISTO (R$)</b></font></div></th>
+                                        <th width="15%" align="center"><div align="center"><font color="#73879C"><b>REALIZADO (R$)</b></font></div></th>
+                                        <th width="15%" align="center"><div align="center"><font color="#73879C"><b>DIFERENÇA (R$)</b></font></div></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th width="30%">( + ) Total de receitas:</th>
+                                        <td width="15%" align="center"><div id="totalReceitasPrevisto"></div></td>
+                                        <td width="15%" align="center"><div id="totalReceitasRealizado"></div></td>
+                                        <td width="15%" align="center"><div id="totalReceitasDiferenca"></div></td>
+                                    </tr>
+                                    <tr>
+                                        <th>( - ) Total de despesas:</th>
+                                        <td width="15%" align="center"><div id="totalDespesasPrevisto"></div></td>
+                                        <td width="15%" align="center"><div id="totalDespesasRealizado"></div></td>
+                                        <td width="15%" align="center"><div id="totalDespesasDiferenca"></div></td>
+                                    </tr>
+                                    <tr>
+                                        <th>( = ) Saldo (receitas - despesas):</th>
+                                        <td width="15%" align="center"><div id="saldoMensalPrevisto"></div></td>
+                                        <td width="15%" align="center"><div id="saldoMensalRealizado"></div></td>
+                                        <td width="15%" align="center"><div id="saldoMensalDiferenca"></div></td>
+                                    </tr>
+                                    <tr>
+                                        <th>( + ) Saldo no início do mês:</th>
+                                        <td width="15%" align="center"><div id="saldoInicioMesRealizado"></div></td>
+                                        <td width="15%" align="center">&nbsp;</td>
+                                        <td width="15%" align="center">&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <th><b>SALDO FINAL DO MÊS:</b></th>
+                                        <td width="15%" align="center"><div id="saldoFinalMesRealizado"></div></td>
+                                        <td width="15%" align="center">&nbsp;</td>
+                                        <td width="15%" align="center">&nbsp;</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /page content -->
+
+

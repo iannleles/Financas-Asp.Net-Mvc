@@ -1,0 +1,197 @@
+﻿@{
+    Layout = null;
+}
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Finanças - Controle Financeiro</title>
+    <!-- CSS -->
+    <link rel="stylesheet" href="@Url.Content("~/Scripts/assets_login/bootstrap/css/bootstrap.min.css")">
+    <link rel="stylesheet" href="@Url.Content("~/Scripts/assets_login/font-awesome/css/font-awesome.min.css")">
+    <link rel="stylesheet" href="@Url.Content("~/Scripts/assets_login/css/form-elements.css")">
+    <link rel="stylesheet" href="@Url.Content("~/Scripts/assets_login/css/style.css")">
+    <link rel="shortcut icon" href="@Url.Content("~/Scripts/assets_login/ico/favicon.png")">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="@Url.Content("~/Scripts/assets_login/ico/apple-touch-icon-144-precomposed.png")">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="@Url.Content("~/Scripts/assets_login/ico/apple-touch-icon-114-precomposed.png")">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="@Url.Content("~/Scripts/assets_login/ico/apple-touch-icon-72-precomposed.png")">
+    <link rel="apple-touch-icon-precomposed" href="@Url.Content("~/Scripts/assets_login/ico/apple-touch-icon-57-precomposed.png")">
+
+    <link href="@Url.Content("~/Scripts/bootstrap_dialog/bootstrap-dialog.min.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Scripts/bootstrap_dialog/prettify.css")" rel="stylesheet" />
+    <script src="@Url.Content("~/Scripts/bootstrap_dialog/run_prettify.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/script.helper.js")"></script>
+
+</head>
+<body>
+    <!-- Top content -->
+    <div class="top-content">
+
+        <div class="inner-bg">
+            <div class="container">
+                <div class="row">
+                    <div class="col-sm-8 col-sm-offset-2 text">
+                        <h1><strong>Controle Financeiro Pessoal</strong></h1>
+                        <div class="description">
+                            <p>
+                                Para onde esta indo meu dinheiro? Para administrar bem suas finanças, você precisa saber quanto dinheiro ganha (receitas) e para onde ele vai (despesas).
+
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-6 col-sm-offset-3 form-box">
+                        <div class="form-top">
+                            <div class="form-top-left">
+                                <h3>Login no site</h3>
+                                <p>Digite seu e-mail e senha para fazer logon:</p>
+                            </div>
+                            <div class="form-top-right">
+                                <i class="fa fa-key"></i>
+                            </div>
+                        </div>
+                        <div class="form-bottom">
+                            <form role="form" action="" method="post" class="login-form" id="myForm" name="myForm">
+                                <div class="form-group">
+                                    <label class="sr-only" for="form-username">E-mail</label>
+                                    <input type="text" id="email" name="email" placeholder="E-mail..." class="form-username form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label class="sr-only" for="form-password">Senha</label>
+                                    <input type="password" id="senha" name="senha" placeholder="Senha..." class="form-password form-control">
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-3"><button type="button" class="btn" id="btn-entrar">Entrar</button></div>
+                                    <div class="col-sm-9 text-danger lead text-center"><strong>@ViewBag.Mensagem</strong></div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+
+    </div>
+
+
+    <div id="wait" style="display: none; width: 100%; height: 100%; top: 100px; left: 0px; position: fixed; z-index: 10000; text-align: center;">
+        <img src="~/Content/imagens/ajax-loader.gif" width="45" height="45" alt="Loading..." style="position: fixed; top: 50%; left: 50%;" />
+    </div>
+
+
+    <!-- Javascript -->
+    <script src="@Url.Content("~/Scripts/assets_login/js/jquery-1.11.1.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/assets_login/bootstrap/js/bootstrap.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/assets_login/js/jquery.backstretch.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/assets_login/js/scripts.js")"></script>
+    <script src="@Url.Content("~/Scripts/bootstrap_dialog/bootstrap-dialog.min.js")"></script>
+    <script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/jquery.validate.min.js")"></script>
+
+    <script>
+
+        (function ($) {
+            $.backstretch("@Url.Content("~/Scripts/assets_login/img/backgrounds/1.jpg")");
+        })(jQuery);
+
+
+        $(document).ready(function () {
+
+            $("#myForm").keypress(function (e) {
+                if ((e.keyCode == 13) && (e.target.type != "textarea")) {
+                    entrarSistema();
+                }
+            });
+
+            $("#btn-entrar").click(function (e) {
+                entrarSistema();
+            });
+        });
+
+
+        $("#myForm").validate({
+            rules: {
+                email: "required",
+                senha: "required"
+            },
+            messages: {
+                email: "Por favor informe o e-mail",
+                senha: "Por favor informe a senha"
+            },
+            errorElement: "div",
+            wrapper: "div",
+            errorPlacement: function (error, element) {
+                offset = element.offset();
+                error.insertAfter(element)
+                error.css('color', 'red');
+            }
+
+        });
+
+
+        function entrarSistema() {
+            if ($('#myForm').valid()) {
+
+                var ds_email = $("#email").val();
+                var ds_senha = $("#senha").val();
+
+                $.ajax({
+                    url: ' @Url.Action("Index", "Account")',
+                    type: "POST",
+                    data: { email: ds_email, senha: ds_senha },
+                    beforeSend: function () {
+                        $("#myForm :input").prop("disabled", true);
+                        $("body").css({ 'background-color': '#ffffff', 'opacity': 0.7 });
+                        $('#wait').show();
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            $('#wait').hide();
+                            window.location.href = '@Url.Content("~/Dashboard/Home")';
+                        } else {
+                            $("#myForm :input").prop("disabled", false);
+                            $("body").css({ 'background-color': '', 'opacity': '' });
+                            $('#wait').hide();
+                            exibeMensagem(response.responseText);
+                        }
+                    },
+                    error: function (response) {
+                        $("#myForm :input").prop("disabled", false);
+                        $("body").css({ 'background-color': '', 'opacity': '' });
+                        $('#wait').hide();
+                        exibeMensagem("error!");
+                    },
+                    complete: function () {
+                        $("#myForm :input").prop("disabled", false);
+                        $("body").css({ 'background-color': '', 'opacity': '' });
+                        $('#wait').hide();
+                    }
+                });
+            }
+        }
+
+
+        function validateForm() {
+
+            var ds_email = $("#email").val();
+            var ds_senha = $("#senha").val();
+
+
+            if (ds_email == "") {
+                exibeMensagem("Infome o e-mail!");
+                return false;
+            }
+
+            if (ds_senha == "") {
+                exibeMensagem("Infome a senha!");
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+</body>
+</html>

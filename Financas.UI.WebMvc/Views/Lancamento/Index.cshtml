@@ -1,0 +1,669 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+
+    var json = new System.Web.Script.Serialization.JavaScriptSerializer();
+    var listaCategoriasReceita = json.Serialize(Session["CategoriasReceita"]);
+    var listaCategoriasDespesa = json.Serialize(Session["CategoriasDespesa"]);
+    
+
+}
+
+
+
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Scripts/bootstrap_datetimepicker/css/bootstrap-datetimepicker.css")">
+<script type="text/javascript" src="@Url.Content("~/Scripts/bootstrap_datetimepicker/js/moment-with-locales.js")"></script>
+<script type="text/javascript" src="@Url.Content("~/Scripts/bootstrap_datetimepicker/js/bootstrap-datetimepicker.js")"></script>
+
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Content/DataTables/css/dataTables.bootstrap.min.css")">
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/jquery.validate.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/jquery.dataTables.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/dataTables.bootstrap.min.js")"></script>
+<script src="@Url.Content("~/Scripts/script.helper.js")"></script>
+<script src="@Url.Content("~/Scripts/bootstrap_dialog/bootstrap-dialog.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/jquery.mask.js")"></script>
+
+<script src="@Url.Content("~/Scripts/bootstrap-select.min.js")"></script>
+<link href="~/Content/bootstrap-select.min.css" rel="stylesheet" />
+
+<style media="all" type="text/css">
+    .alignCenter {
+        text-align: center;
+    }
+
+    #tblLancamentos tr td {
+        height: 5px;
+    }
+
+    .btn {
+        margin-bottom: 0px;
+    }
+
+    span.arrow {
+        margin-left: 6px;
+        height: 17px;
+    }
+
+    label.error {
+        margin-left: 9px;
+        padding: 1px 5px 0px 5px;
+        font-size: small;
+    }
+
+     .bootstrap-select.btn-group .dropdown-menu .dropdown-header {
+        font-weight: 800;
+     }
+
+    .bootstrap-select.btn-group .dropdown-menu li a.opt {
+    padding-left: 3em;
+    padding-top: 1em;
+   }
+
+ .bootstrap-select.btn-group .dropdown-menu li a:hover {
+     color: whitesmoke !important;
+     background: #bf5279 !important;
+ }
+
+</style>
+
+<script>
+    var table;
+
+    var listaCategoriasReceitasPai = JSON.parse('@Html.Raw(listaCategoriasReceita)');
+    var listaCategoriasDespesasPai = JSON.parse('@Html.Raw(listaCategoriasDespesa)');
+
+    $(document).ready(function () {
+
+
+        $('#modal_form').on('hidden.bs.modal', function () {
+            reload_table();
+        })
+
+        //$("#menuAtivo").html("<font size='4px'><b>Lançamentos</b></font>");
+
+        $('#btnSalvar').click(function () {
+
+            salvarLancamento();
+
+        });
+
+        $("input[name=tipoLancamento]:radio").change(function () {
+            ListarCategoriaPorTipo();
+        })
+
+        $("#formCadastro").keypress(function (e) {
+            if ((e.keyCode == 13) && (e.target.type != "textarea")) {
+                $('#formCadastro').valid();
+                return false;
+            }
+        });
+
+        $("#formCadastro").validate({
+            rules: {
+                dataLancamento: "required",
+                categoriaLancamento: "required",
+                valorLancamento: "required"
+            },
+            messages: {
+                dataLancamento: "Data obrigatória!",
+                categoriaLancamento: "Categoria obrigatória!",
+                valorLancamento: "Valor obrigatório!"
+            },
+            errorElement: "div",
+            wrapper: "div",
+            errorPlacement: function (error, element) {
+                offset = element.offset();
+                error.insertAfter(element)
+                error.css('color', 'red');
+            }
+        });
+
+
+        $('#dataLancamento').mask('00/00/0000');
+        $('#valorLancamento').mask('#.##0,00', { reverse: true });
+
+        $('#btnNovoLancamento').click(function () {
+            $('#modal_form').modal('show'); // show bootstrap modal
+            NovoRegistro();
+        });
+
+
+        $('#datetimepicker').datetimepicker({
+            viewMode: 'years',
+            format: 'YYYY'
+        }).on('dp.update', function (ev) {
+
+            var ano = $("#ano").val();
+
+            var mes = $("#mesCorrente").val();
+
+            RefreshTable('#tblLancamentos', "@Url.Content("~/Lancamento/Processar?ano=")" + ano + '&mes=' + mes);
+
+        });
+
+        $(function () {
+            $('#dataLancamento').datetimepicker({
+                locale: 'pt',
+                format: 'DD/MM/YYYY'
+            });
+        });
+
+        SetValoresPadrao();
+
+        Number.prototype.formatMoney = function (c, d, t) {
+            var n = this, c = isNaN(c = Math.abs(c)) ? 2 : c, d = d == undefined ? "," : d, t = t == undefined ? "." : t, s = n < 0 ? "-" : "", i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", j = (j = i.length) > 3 ? j % 3 : 0;
+            return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+        };
+
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            var ano = $("#ano").val();
+            var mes = $(e.target).attr("data-target");
+
+            $("#mesCorrente").val(mes);
+
+            RefreshTable('#tblLancamentos', "@Url.Content("~/Lancamento/Processar?ano=")" + ano + '&mes=' + mes);
+
+        });
+
+    });
+
+    function NovoRegistro() {
+        save_method = 'add';
+
+        $('.modal-title').text('Novo Lancamento'); // Set Title to Bootstrap modal title
+
+        $('#idLancamento').val("");
+        $('#dataLancamento').val(retornaDataAtual());
+        $('#descricaoLancamento').val("");
+        $('#valorLancamento').val("");
+
+        if ($('input:radio[name=tipoLancamento]')[1].checked == false) {
+            $('input:radio[name=tipoLancamento]')[1].checked = true;
+            ListarCategoriaPorTipo();
+        }
+
+        //if (!fixarCategoria)
+        //    $('#categoriaLancamento').selectpicker('deselectAll');
+
+    }
+
+    function ListarCategoriaPorTipo() {
+        $("#categoriaLancamento").html("");
+        var response = "";
+        var categorias;
+        if ($('input:radio[name=tipoLancamento]')[0].checked) {
+            categorias = listaCategoriasReceitasPai;
+        }
+        else {
+            categorias = listaCategoriasDespesasPai;
+        }
+
+
+        for (var countPai = 0; countPai < categorias.length; countPai++) {
+            if (categorias[countPai].CategoriaFilha.length > 0) {
+                response = response.concat("<optgroup label=" + categorias[countPai].CategoriaPaiNome + ">");
+
+                for (var countFilha = 0; countFilha < categorias[countPai].CategoriaFilha.length; countFilha++) {
+                    response = response.concat("<option value=" + categorias[countPai].CategoriaFilha[countFilha].CategoriaId + ">" + categorias[countPai].CategoriaFilha[countFilha].CategoriaNome + "</option>");
+
+                }
+
+                response = response.concat("</optgroup>");
+
+            } else {
+                response = response.concat("<option value=" + categorias[countPai].CategoriaPaiId + ">" + categorias[countPai].CategoriaPaiNome + "</option>");
+            }
+
+        }
+
+        $("#categoriaLancamento").append(response);
+        $('#categoriaLancamento').selectpicker('refresh');
+
+    }
+
+    function retornaDataAtual() {
+
+        var data = new Date();
+        var ano = data.getFullYear();
+        var mes = data.getMonth() + 1;
+        var dia = data.getDate();
+
+        var output = (dia < 10 ? '0' : '') + dia + '/' + (mes < 10 ? '0' : '') + mes + '/' + ano;
+
+        return output;
+    }
+
+    function RefreshTable(tableId, urlData) {
+        $.getJSON(urlData, null, function (json) {
+            table = $(tableId).dataTable();
+            oSettings = table.fnSettings();
+
+            CarregarSomatorias(json.iTotalReceitas, json.iTotalDespesas, json.iSaldoMensal, json.iSaldoInicioMes, json.iSaldoFinalMes);
+
+            table.fnClearTable(this);
+
+            for (var i = 0; i < json.aaData.length; i++) {
+                table.oApi._fnAddData(oSettings, json.aaData[i]);
+            }
+
+            oSettings.aiDisplay = oSettings.aiDisplayMaster.slice();
+            table.fnDraw();
+        });
+    }
+
+    function CarregarSomatorias(totalReceitas, totalDespesas, saldoMensal, saldoInicioMes, saldoFinalMes) {
+
+        $("#totalReceitas").html(totalReceitas.formatMoney(2, ',', '.'));
+        $("#totalDespesas").html(totalDespesas.formatMoney(2, ',', '.'));
+        $("#saldoMensal").html(saldoMensal.formatMoney(2, ',', '.'));
+        $("#saldoInicioMes").html(saldoInicioMes.formatMoney(2, ',', '.'));
+        $("#saldoFinalMes").html(saldoFinalMes.formatMoney(2, ',', '.'));
+
+        if (totalDespesas > 0)
+            $("#totalDespesas").css("color", "red");
+        else
+            $("#totalDespesas").css("color", "black");
+
+        if (saldoMensal < 0)
+            $("#saldoMensal").css("color", "red");
+        else
+            $("#saldoMensal").css("color", "black");
+
+        if (saldoInicioMes < 0)
+            $("#saldoInicioMes").css("color", "red");
+        else
+            $("#saldoInicioMes").css("color", "black");
+
+        if (saldoFinalMes < 0)
+            $("#saldoFinalMes").css("color", "red");
+        else
+            $("#saldoFinalMes").css("color", "black");
+
+    }
+
+    function CarregarGridLancamentos(ano, mes) {
+
+        table = $("#tblLancamentos").DataTable({
+
+            "ajax": {
+                "url": "@Url.Content("~/Lancamento/Processar?ano=")" + ano + "&mes=" + mes,
+                "dataSrc": function (json) {
+
+                    CarregarSomatorias(json.iTotalReceitas, json.iTotalDespesas, json.iSaldoMensal, json.iSaldoInicioMes, json.iSaldoFinalMes);
+
+                    return json.aaData;
+                }
+            },
+            "aoColumns": [
+                {
+                    "render": function (data, type, row, meta) {
+                        var a = '';
+                        if (row.Id != null)
+                            a = '<a class="btn btn-xs btn-primary" href="javascript:void(0)" title="Edit" onclick="editar_lancamento(' + row.Id + ')"><i class="glyphicon glyphicon-pencil fa-1x""></i> </a> <a class="btn btn-xs btn-danger" href="javascript:void(0)" title="Hapus" onclick="excluir_lancamento(' + row.Id + ')"><i class="glyphicon glyphicon-trash"></i> </a>';
+
+                        return a;
+                    }, "sWidth": "5%", "sClass": "alignCenter", "orderable": false
+                },
+                { "mData": "Data", "sClass": "alignCenter", "sWidth": "10%" },
+                { "mData": "Descricao", "sWidth": "30%" },
+                 {
+                     "render": function (data, type, row, meta) {
+                         if (row.Entrada > 0)
+                             return row.Entrada.formatMoney(2, ',', '.');
+                         else
+                             return "";
+                     }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                 },
+                 {
+                     "render": function (data, type, row, meta) {
+                         if (row.Saida > 0)
+                             return '<font color="red">' + row.Saida.formatMoney(2, ',', '.') + '</font>';
+                         else
+                             return "";
+                     }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                 },
+                {
+                    "render": function (data, type, row, meta) {
+                        if (row.Saldo < 0)
+                            return '<font color="red">' + row.Saldo.formatMoney(2, ',', '.') + '</font>';
+                        else
+                            return row.Saldo.formatMoney(2, ',', '.');
+
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+            ],
+
+            language: {
+                "sEmptyTable": "Nenhum registro encontrado",
+                "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+                "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
+                "sInfoFiltered": "(Filtrados de _MAX_ registros)",
+                "sInfoPostFix": "",
+                "sInfoThousands": ".",
+                "sLengthMenu": "_MENU_ resultados por página",
+                "sLoadingRecords": "Carregando...",
+                "sProcessing": "Processando...",
+                "sZeroRecords": "Nenhum registro encontrado",
+                "sSearch": "Pesquisar",
+                "oPaginate": {
+                    "sNext": "Próximo",
+                    "sPrevious": "Anterior",
+                    "sFirst": "Primeiro",
+                    "sLast": "Último"
+                },
+                "oAria": {
+                    "sSortAscending": ": Ordenar colunas de forma ascendente",
+                    "sSortDescending": ": Ordenar colunas de forma descendente"
+                }
+            }
+        });
+    }
+
+    function SetValoresPadrao() {
+
+        var data = new Date();
+        var mes = data.getMonth() + 1;
+        var ano = data.getFullYear();
+
+        $('#ano').val(ano);
+
+        tabActive = mes - 1;
+
+        $("#mesCorrente").val(mes);
+
+        $("#myTab li:eq(" + tabActive + ") a").tab('show');
+
+        CarregarGridLancamentos(ano, mes);
+
+    }
+
+    function CarregarDadosAnoMes(ano, mes) {
+        $('#myTabContent').html("Ano: " + ano + " - Mes: " + mes);
+    }
+
+    function salvarLancamento() {
+
+
+        if ($('#formCadastro').valid()) {  //call valid for form2 and show the errors
+
+            $('#btnSalvar').text('Salvando...'); //change button text
+            $('#btnSalvar').attr('disabled', true); //set button disable
+
+            var dadosFormulario = $("#formCadastro").serialize();
+
+            $.ajax({
+                url: '@Url.Action("SalvarLancamento", "Lancamento")',
+                type: "POST",
+                data: dadosFormulario,
+                dataType: "JSON",
+                success: function (data) {
+
+                    if (data.success) //if success close modal and reload ajax table
+                    {
+
+                        if ($('#idLancamento').val() == "") {
+                            exibeMensagemCadastro(data.responseText);
+                            //NovoRegistro(document.getElementById('fixarCategoria').checked);
+                            NovoRegistro();
+                        }
+                        else {
+                            exibeMensagem(data.responseText);
+                            $('#modal_form').modal('hide');
+
+                        }
+
+                    }
+
+                    $('#btnSalvar').text('Salvar'); //change button text
+                    $('#btnSalvar').attr('disabled', false); //set button enable
+
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert('Erro ao incluir / atualizar dados');
+                    $('#btnSalvar').text('Salvar'); //change button text
+                    $('#btnSalvar').attr('disabled', false); //set button enable
+
+                }
+            });
+
+        }
+    }
+
+    function exibeMensagemCadastro(mensagem) {
+        $('#mensagemCadastro').html(mensagem);
+        setTimeout(
+        function () {
+            $('#mensagemCadastro').html("");
+        }, 5000);
+    }
+
+    function excluir_lancamento(idLancamento) {
+
+        if (confirm('Confirma a exclusão?')) {
+            // ajax delete data to database
+            $.ajax({
+                url: '@Url.Action("ExcluirLancamento", "Lancamento")',
+                data: { id: idLancamento },
+                type: "POST",
+                dataType: "JSON",
+                success: function (data) {
+
+                    $('#modal_form').modal('hide');
+
+                    if (data.success) //if success close modal and reload ajax table
+                    {
+                        exibeMensagem(data.responseText);
+                        reload_table();
+                    }
+                    else {
+                        exibeMensagem(data.responseText);
+                    }
+
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert('Error deleting data');
+                }
+            });
+        }
+    }
+
+
+    function editar_lancamento(idLancamento) {
+        save_method = 'update';
+        $('#formCadastro')[0].reset(); // reset form on modals
+
+        //Ajax Load data from ajax
+        $.ajax({
+            url: '@Url.Action("ObterLancamento", "Lancamento")',
+            data: { id: idLancamento },
+            type: "GET",
+            dataType: "JSON",
+            success: function (data) {
+
+                $('#modal_form').modal('show'); // show bootstrap modal when complete loaded
+                $('.modal-title').text('Editar Lançamento'); // Set title to Bootstrap modal title
+                $('[name="idLancamento"]').val(data.LancamentoId);
+                $('[name="dataLancamento"]').val(data.LancamentoData);
+                $('[name="valorLancamento"]').val(data.LancamentoValor.formatMoney(2, ',', '.'));
+                $('[name="descricaoLancamento"]').val(data.LancamentoDescricao);
+                if (data.LancamentoTipo == 'R') $('input:radio[name=tipoLancamento]')[0].checked = true; else $('input:radio[name=tipoLancamento]')[1].checked = true;
+                ListarCategoriaPorTipo();
+                $('#categoriaLancamento').selectpicker('val', data.LancamentoCategoriaId);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                alert('Error get data from ajax');
+            }
+        });
+    }
+
+    function reload_table() {
+
+        var ano = $("#ano").val();
+
+        var mes = $("#mesCorrente").val();
+
+        RefreshTable('#tblLancamentos', "@Url.Content("~/Lancamento/Processar?ano=")" + ano + '&mes=' + mes);
+
+        //table.ajax.reload();
+    }
+
+</script>
+
+<!-- page content -->
+<div role="main">
+    <div class="">
+
+        <div class="clearfix"></div>
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="x_panel">
+                    <div class="x_title">
+
+                        <div class="col-sm-2">
+                            <button type="button" class="btn btn-default" name="btnNovoLancamento" id="btnNovoLancamento">Novo Lançamento</button>
+                        </div>
+
+                        <div class="col-sm-8" style="height:70px">
+                            <ul id="myTab" class="nav nav-tabs">
+                                <li class="" id="1"><a href="#" data-toggle="tab" data-target="1" style="font-size: 14px">Janeiro</a></li>
+                                <li class="" id="2"><a href="#" data-toggle="tab" data-target="2" style="font-size: 14px">Fevereiro</a></li>
+                                <li class="" id="3"><a href="#" data-toggle="tab" data-target="3" style="font-size: 14px; ">Marco</a></li>
+                                <li class="" id="4"><a href="#" data-toggle="tab" data-target="4" style="font-size: 14px">Abril</a></li>
+                                <li class="" id="5"><a href="#" data-toggle="tab" data-target="5" style="font-size: 14px">Maio</a></li>
+                                <li class="" id="6"><a href="#" data-toggle="tab" data-target="6" style="font-size: 14px">Junho</a></li>
+                                <li class="" id="7"><a href="#" data-toggle="tab" data-target="7" style="font-size: 14px">Julho</a></li>
+                                <li class="" id="8"><a href="#" data-toggle="tab" data-target="8" style="font-size: 14px">Agosto</a></li>
+                                <li class="" id="9"><a href="#" data-toggle="tab" data-target="9" style="font-size: 14px">Setembro</a></li>
+                                <li class="" id="10"><a href="#" data-toggle="tab" data-target="10" style="font-size: 14px">Outubro</a></li>
+                                <li class="" id="11"><a href="#" data-toggle="tab" data-target="11" style="font-size: 14px">Novembro</a></li>
+                                <li class="" id="12"><a href="#" data-toggle="tab" data-target="12" style="font-size: 14px">Dezembro</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-sm-1">&nbsp;<input type="hidden" id="mesCorrente" value="" /></div>
+                        <div class="col-sm-1">
+                            <div class="form-group">
+                                <div class='input-group date' id='datetimepicker'>
+                                    <input type='text' id="ano" class="form-control" />
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar">
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <table id="tblLancamentos" class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Ações</th>
+                                    <th>Data</th>
+                                    <th>Descrição</th>
+                                    <th>Entrada</th>
+                                    <th>Saida</th>
+                                    <th>Saldo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyTable"></tbody>
+                        </table><br />
+                        <div>
+                            <table class="table table-inverse table-active">
+                                <thead>
+                                    <tr style='background-color: #696969;'>
+                                        <th colspan="2"><font color="white"><b>RESUMO GERAL</b></font></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th width="300px">( + ) Total de receitas:</th>
+                                        <td><div id="totalReceitas"></div></td>
+                                    </tr>
+                                    <tr>
+                                        <th>( - ) Total de despesas:</th>
+                                        <td><div id="totalDespesas"></div></td>
+                                    </tr>
+                                    <tr>
+                                        <th>( = ) Saldo (receitas - despesas):</th>
+                                        <td><div id="saldoMensal"></div></td>
+                                    </tr>
+                                    <tr>
+                                        <th>( + ) Saldo no início do mês:</th>
+                                        <td><div id="saldoInicioMes"></div></td>
+                                    </tr>
+                                    <tr>
+                                        <th><b>SALDO FINAL DO MÊS:</b></th>
+                                        <td><div id="saldoFinalMes"></div></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /page content -->
+<!-- Bootstrap modal -->
+<div class="modal fade" id="modal_form" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formCadastro" name="formCadastro" class="form-horizontal" novalidate="novalidate">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h3 class="modal-title">Lançamento</h3>
+                </div>
+                <div class="modal-body form">
+                    <input type="hidden" value="" name="idLancamento" id="idLancamento" />
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="control-label col-md-2" for="datetimeLancamento">Data</label>
+                            <div class="col-md-3"><input type='text' id="dataLancamento" name="dataLancamento" class="form-control" /></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-md-2" for="tipoLancamento">Tipo</label>
+                            <div class="col-md-10">
+                                <div class="radio">
+                                    <label><input type="radio" value="R" name="tipoLancamento" id="tipoLancamento">Receita</label>
+                                    <label><input type="radio" value="D" name="tipoLancamento" id="tipoLancamento">Despesa</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-md-2" for="categoriaLancamento">Categoria</label>
+                            <div class="col-md-10">
+                                <select id="categoriaLancamento" name="categoriaLancamento" data-deselectalltext="Deselect All" data-live-search="true" style="height:34px; width:300px" title=""></select>
+                                @*<input type="checkbox" id="fixarCategoria" name="fixarCategoria" value="true" />*@
+                            </div>
+                            <input type="hidden" id="categoriasReceita" name="categoriasReceita" value="@Html.Raw(listaCategoriasReceita)" />
+                            <input type="hidden" id="categoriasDespesa" name="categoriasDespesa" value="@Html.Raw(listaCategoriasDespesa)" />
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-md-2">Descrição</label>
+                            <div class="col-md-10">
+                                <input type="text" name="descricaoLancamento" id="descricaoLancamento" placeholder="" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-md-2" for="valorLancamento">Valor</label>
+                            <div class="col-md-3">
+                                <input name="valorLancamento" id="valorLancamento" placeholder="" class="form-control" type="text">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="row">
+                        <div class="col-md-5" id="mensagemCadastro">&nbsp;</div>
+                        <div class="col-md-3">&nbsp;</div>
+                        <div class="col-md-2"><button type="button" id="btnSalvar" name="btnSalvar" value="Salvar" class="btn btn-primary">Salvar</button></div>
+                        <div class="col-md-2"><button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button></div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

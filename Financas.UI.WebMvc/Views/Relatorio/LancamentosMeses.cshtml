@@ -1,0 +1,444 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Scripts/bootstrap_datetimepicker/css/bootstrap-datetimepicker.css")">
+<script type="text/javascript" src="@Url.Content("~/Scripts/bootstrap_datetimepicker/js/moment-with-locales.js")"></script>
+<script type="text/javascript" src="@Url.Content("~/Scripts/bootstrap_datetimepicker/js/bootstrap-datetimepicker.js")"></script>
+
+
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Content/DataTables/css/dataTables.bootstrap.min.css")">
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Content/DataTables/css/jquery.dataTables.min.css")">
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Content/DataTables/css/buttons.dataTables.css")">
+
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/jquery.dataTables.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/dataTables.bootstrap.min.js")"></script>
+
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/dataTables.buttons.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/buttons.flash.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/jszip/2.5.0/jszip.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/pdfmake/0.1.18/pdfmake.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/pdfmake/0.1.18/vfs_fonts.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/buttons.html5.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/buttons.print.min.js")"></script>
+
+<script src="@Url.Content("~/Scripts/script.helper.js")"></script>
+<script src="@Url.Content("~/Scripts/bootstrap_dialog/bootstrap-dialog.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/jquery.mask.js")"></script>
+
+<script src="@Url.Content("~/Scripts/bootstrap-select.min.js")"></script>
+<link href="~/Content/bootstrap-select.min.css" rel="stylesheet" />
+
+<style media="all" type="text/css">
+    .alignCenter {
+        text-align: center;
+    }
+
+    #tblLancamentos tr td {
+        height: 5px;
+    }
+
+    .btn {
+        margin-bottom: 0px;
+    }
+
+    span.arrow {
+        margin-left: 6px;
+        height: 17px;
+    }
+
+    label.error {
+        margin-left: 9px;
+        padding: 1px 5px 0px 5px;
+        font-size: small;
+    }
+
+    tr.groupPai,
+    tr.groupPai:hover {
+        background-color: #737375 !important;
+    }
+
+    tr.group,
+    tr.group:hover {
+        background-color: #ddd !important;
+    }
+</style>
+
+<script>
+    var table;
+
+    $(document).ready(function () {
+
+        $('#modal_form').on('hidden.bs.modal', function () {
+            reload_table();
+        })
+
+        //$("#menuAtivo").html("<font size='4px'><b>Orçamento</b></font>");
+
+        $('#datetimepicker').datetimepicker({
+            viewMode: 'years',
+            format: 'YYYY'
+        }).on('dp.update', function (ev) {
+
+            var ano = $("#anoLancamento").val();
+
+            $("#anoTitle").html(ano);
+
+            RefreshTable('#tblLancamentos', "@Url.Content("~/Relatorio/ProcessarLancamentosMeses?ano=")" + ano);
+
+        });
+
+
+        $("#anoTitle").css("font-size", "45px");
+        $("#anoTitle").css("font-weight", "bold");
+
+
+        SetValoresPadrao();
+
+        Number.prototype.formatMoney = function (c, d, t) {
+            var n = this, c = isNaN(c = Math.abs(c)) ? 2 : c, d = d == undefined ? "," : d, t = t == undefined ? "." : t, s = n < 0 ? "-" : "", i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", j = (j = i.length) > 3 ? j % 3 : 0;
+            return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+        };
+
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            var ano = $("#anoLancamento").val();
+
+            RefreshTable('#tblLancamentos', "@Url.Content("~/Relatorio/ProcessarLancamentosMeses?ano=")" + ano);
+
+        });
+
+
+    });
+
+    function RefreshTable(tableId, urlData) {
+        $.getJSON(urlData, null, function (json) {
+            table = $(tableId).dataTable();
+            oSettings = table.fnSettings();
+
+            CarregarSomatorias(json.iTotalReceitas,
+                                json.iTotalDespesas,
+                                json.iSaldoFinal);
+
+            table.fnClearTable(this);
+
+            for (var i = 0; i < json.aaData.length; i++) {
+                table.oApi._fnAddData(oSettings, json.aaData[i]);
+            }
+
+            oSettings.aiDisplay = oSettings.aiDisplayMaster.slice();
+            table.fnDraw();
+        });
+    }
+
+   
+    function CarregarSomatorias(totalReceitas, 
+                                totalDespesas,  
+                                saldoFinal) {
+
+        $("#totalReceitas").html(totalReceitas.formatMoney(2, ',', '.'));
+
+        $("#totalDespesas").html(totalDespesas.formatMoney(2, ',', '.'));
+
+        $("#saldoFinal").html(saldoFinal.formatMoney(2, ',', '.'));
+
+        if (totalDespesas > 0)
+            $("#totalDespesas").css("color", "red");
+        else
+            $("#totalDespesas").css("color", "black");
+
+        if (saldoFinal < 0)
+            $("#saldoFinal").css("color", "red");
+        else
+            $("#saldoFinal").css("color", "black");
+
+    }
+
+    function CarregarGridLancamentos(ano) {
+
+        table = $("#tblLancamentos").DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+
+                {
+                    extend: 'copy'
+                },
+                 {
+                     extend: 'csv',
+                     title: 'Lancamento por meses'
+                 },
+                 {
+                     extend: 'excel',
+                     title: 'Lancamento por meses'
+                 },
+                 {
+                     extend: 'pdf',
+                     orientation: 'landscape',
+                     pageSize: 'A4',
+                     title: 'Lancamento por meses'
+                 },
+                 {
+                     extend: 'print',
+                     orientation: 'landscape',
+                     pageSize: 'A4',
+                     title: 'Lancamento por meses'
+                 }
+            ],
+            "paging": false,
+            "ajax": {
+                "url": "@Url.Content("~/Relatorio/ProcessarLancamentosMeses?ano=")" + ano,
+                "dataSrc": function (json) {
+
+                    CarregarSomatorias(json.iTotalReceitas,
+                                       json.iTotalDespesas,
+                                       json.iSaldoFinal);
+
+                    return json.aaData;
+                }
+            },
+            "iDisplayLength": "100",
+            "aoColumns": [
+                { "mData": "CategoriaPaiNome" },
+                { "mData": "CategoriaPaiTipo" },
+                { "mData": "CategoriaNome", "sWidth": "30%" },
+                {
+                    "render": function (data, type, row, meta) {
+                        return row.Jan.formatMoney(2, ',', '.');
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+                {
+                    "render": function (data, type, row, meta) {
+                        return row.Fev.formatMoney(2, ',', '.');
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+                {
+                    "render": function (data, type, row, meta) {
+                        return row.Mar.formatMoney(2, ',', '.');
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+                {
+                    "render": function (data, type, row, meta) {
+                        return row.Abr.formatMoney(2, ',', '.');
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+                {
+                    "render": function (data, type, row, meta) {
+                        return row.Mai.formatMoney(2, ',', '.');
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+                {
+                    "render": function (data, type, row, meta) {
+                        return row.Jun.formatMoney(2, ',', '.');
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+                {
+                    "render": function (data, type, row, meta) {
+                        return row.Jul.formatMoney(2, ',', '.');
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+                {
+                    "render": function (data, type, row, meta) {
+                        return row.Ago.formatMoney(2, ',', '.');
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+                {
+                    "render": function (data, type, row, meta) {
+                        return row.Set.formatMoney(2, ',', '.');
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+                {
+                    "render": function (data, type, row, meta) {
+                        return row.Out.formatMoney(2, ',', '.');
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+                {
+                    "render": function (data, type, row, meta) {
+                        return row.Nov.formatMoney(2, ',', '.');
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+                {
+                    "render": function (data, type, row, meta) {
+                        return row.Dez.formatMoney(2, ',', '.');
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+                {
+                    "render": function (data, type, row, meta) {
+                        return "<b>" + row.Total.formatMoney(2, ',', '.') + "</b>";
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                }
+
+            ],
+            "columnDefs": [
+                { "visible": false, "targets": 0 },
+                { "visible": false, "targets": 1 }
+            ],
+            "order": [[ 1, 'desc' ]],  
+            "drawCallback": function (settings) {
+                var api = this.api();
+                var rows = api.rows({ page: 'current' }).nodes();
+                var last = null;
+                var mostraDespesa = 0;
+
+                api.column(0, { page: 'current' }).data().each(function (group, i) {
+                    if (last !== group) {
+                        if (group !== "Receitas" && mostraDespesa == 0) {
+                            $(rows).eq(i).before(
+                             '<tr><td colspan="14">&nbsp;</td></tr><tr class="groupPai"><td colspan="14"><font color="white"><b>DESPESAS<b></font></td></tr>'
+                            );
+                            mostraDespesa = 1;
+                        }
+                        if (group == "Receitas") {
+                            $(rows).eq(i).before(
+                            '<tr class="groupPai"><td colspan="14"><font color="white"><b>RECEITAS<b></font></td></tr>'
+                           );
+                        } else
+                        {
+                            $(rows).eq(i).before(
+                            '<tr class="group"><td colspan="14"><b>' + group + '<b></td></tr>'
+                            );
+                        }
+                        
+
+                        last = group;
+                    }
+                });
+            },
+            language: {
+                "sEmptyTable": "Nenhum registro encontrado",
+                "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+                "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
+                "sInfoFiltered": "(Filtrados de _MAX_ registros)",
+                "sInfoPostFix": "",
+                "sInfoThousands": ".",
+                "sLengthMenu": "_MENU_ resultados por página",
+                "sLoadingRecords": "Carregando...",
+                "sProcessing": "Processando...",
+                "sZeroRecords": "Nenhum registro encontrado",
+                "sSearch": "Pesquisar",
+                "oPaginate": {
+                    "sNext": "Próximo",
+                    "sPrevious": "Anterior",
+                    "sFirst": "Primeiro",
+                    "sLast": "Último"
+                },
+                "oAria": {
+                    "sSortAscending": ": Ordenar colunas de forma ascendente",
+                    "sSortDescending": ": Ordenar colunas de forma descendente"
+                }
+            }
+        });
+    }
+
+    function SetValoresPadrao() {
+
+        var data = new Date();
+        var mes = data.getMonth() + 1;
+        var ano = data.getFullYear();
+
+        $('#anoLancamento').val(ano);
+
+        $("#anoTitle").html(ano);
+
+        CarregarGridLancamentos(ano);
+
+
+    }
+
+    function reload_table() {
+
+        var ano = $("#anoLancamento").val();
+
+        RefreshTable('#tblLancamentos', "@Url.Content("~/Relatorio/ProcessarLancamentosMeses?ano=")" + ano);
+
+        //table.ajax.reload();
+    }
+
+</script>
+
+<!-- page content -->
+<div role="main">
+    <div class="">
+
+        <div class="clearfix"></div>
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="x_panel">
+                    <div class="x_title">
+
+                        <div class="col-sm-5">
+                            <h2><i class="fa fa-list-alt"></i> Relatório - Lançamentos por Meses</h2>
+                        </div>
+                        <div class="col-sm-6" style="height:70px">&nbsp;<div id="anoTitle"></div></div>
+                        <div class="col-sm-1">
+                            <div class="form-group">
+                                <div class='input-group date' id='datetimepicker'>
+                                    <input type='text' id="anoLancamento" class="form-control" />
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar">
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="mesCorrente" value="" />
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <table id="tblLancamentos" class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>CategoriaPai</th>
+                                    <th>CategoriaPaiTipo</th>
+                                    <th>Categoria</th>
+                                    <th>Jan</th>
+                                    <th>Fev</th>
+                                    <th>Mar</th>
+                                    <th>Abr</th>
+                                    <th>Mai</th>
+                                    <th>Jun</th>
+                                    <th>Jul</th>
+                                    <th>Ago</th>
+                                    <th>Set</th>
+                                    <th>Out</th>
+                                    <th>Nov</th>
+                                    <th>Dez</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyTable"></tbody>
+                        </table><br />
+                        <div>
+                            <div>
+                                <table class="table table-inverse table-active">
+                                    <thead>
+                                        <tr style='background-color: #737375;'>
+                                            <th colspan="2"><font color="white"><b>RESUMO GERAL</b></font></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <th width="300px">( + ) Total de receitas:</th>
+                                            <td><div id="totalReceitas"></div></td>
+                                        </tr>
+                                        <tr>
+                                            <th>( - ) Total de despesas:</th>
+                                            <td><div id="totalDespesas"></div></td>
+                                        </tr>
+                                        <tr>
+                                            <th>( = ) Saldo (receitas - despesas):</th>
+                                            <td><div id="saldoFinal"></div></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /page content -->
+
+

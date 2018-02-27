@@ -1,0 +1,334 @@
+﻿
+@{
+    ViewBag.Title = "ComparativoAnosReceitaDespesa";
+}
+
+
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/Highcharts-5.0.6/highcharts.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/Highcharts-5.0.6/modules/data.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/Highcharts-5.0.6/modules/drilldown.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/Highcharts-5.0.6/modules/exporting.js")"></script>
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Scripts/bootstrap_datetimepicker/css/bootstrap-datetimepicker.css")">
+<script type="text/javascript" src="@Url.Content("~/Scripts/bootstrap_datetimepicker/js/moment-with-locales.js")"></script>
+<script type="text/javascript" src="@Url.Content("~/Scripts/bootstrap_datetimepicker/js/bootstrap-datetimepicker.js")"></script>
+
+<script src="@Url.Content("~/Scripts/script.helper.js")"></script>
+<script src="@Url.Content("~/Scripts/bootstrap_dialog/bootstrap-dialog.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/jquery.mask.js")"></script>
+
+<script src="@Url.Content("~/Scripts/bootstrap-select.min.js")"></script>
+<link href="~/Content/bootstrap-select.min.css" rel="stylesheet" />
+
+<style media="all" type="text/css">
+    .alignCenter {
+        text-align: center;
+    }
+
+    #tblLancamentos tr td {
+        height: 5px;
+    }
+
+    .btn {
+        margin-bottom: 0px;
+    }
+
+    span.arrow {
+        margin-left: 6px;
+        height: 17px;
+    }
+
+    label.error {
+        margin-left: 9px;
+        padding: 1px 5px 0px 5px;
+        font-size: small;
+    }
+</style>
+
+<script>
+    var table;
+
+    $(document).ready(function () {
+
+
+        $('#modal_form').on('hidden.bs.modal', function () {
+            reload_table();
+        })
+
+        $('#anoInicial').mask('0000');
+        $('#anoFinal').mask('0000');
+
+        $(function () {
+            $('#anoInicial').datetimepicker({
+                viewMode: 'years',
+                format: 'YYYY'
+            });
+        });
+
+        $(function () {
+            $('#anoFinal').datetimepicker({
+                viewMode: 'years',
+                format: 'YYYY'
+            });
+        });
+
+
+        Number.prototype.formatMoney = function (c, d, t) {
+            var n = this, c = isNaN(c = Math.abs(c)) ? 2 : c, d = d == undefined ? "," : d, t = t == undefined ? "." : t, s = n < 0 ? "-" : "", i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", j = (j = i.length) > 3 ? j % 3 : 0;
+            return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+        };
+
+        $("#pesquisarDashboard").click(function () {
+
+
+            var anoInicial = $('#anoInicial').val();
+            var anoFinal = $('#anoFinal').val();
+
+            CarregarDashboard(anoInicial, anoFinal);
+
+
+        });
+
+        SetValoresPadrao();
+
+    });
+
+    function SetValoresPadrao() {
+
+        var data = new Date();
+        var ano = data.getFullYear();
+
+        $('#anoInicial').val(ano-3);
+        $('#anoFinal').val(ano);
+
+        CarregarDashboard(ano-3, ano);
+
+    }
+
+
+    function CarregarDashboard(anoInicial, anoFinal) {
+
+
+        $.ajax({
+            type: "POST",
+            url: "@Url.Content("~/Dashboard/ObterDashboardAnos?anoInicial=")" + anoInicial + "&anoFinal=" + anoFinal,
+            dataType: "json",
+            beforeSend: function () {
+
+                $('#wait').show();
+
+            },
+            success: function (response) {
+
+                $('#wait').hide();
+
+                CarregarHighcharts(response.Anos, response.Receitas, response.Despesas);
+
+            },
+            failure: function (response) {
+                alert(response.responseText);
+            },
+            error: function (response) {
+                alert(response.responseText);
+            }
+    });
+    }
+
+
+    function CarregarHighcharts(listaAnos, listaReceitas, listaDespesas) {
+
+        Highcharts.setOptions({
+            lang: {
+                decimalPoint: ',',
+                thousandsSep: ' '
+            }
+        });
+
+
+        Highcharts.chart('containerLine', {
+
+            xAxis: {
+                categories: listaAnos
+            },
+            chart: {
+                type: 'column'
+            },
+            title: {
+                text: ''
+            },
+            yAxis: {
+                allowDecimals: true,
+                title: {
+                    text: 'Valores (R$)'
+                }
+            },
+            series: [{
+                name: 'Receitas',
+                data: listaReceitas
+            }, {
+                name: 'Despesas',
+                data: listaDespesas
+            }]
+            ,
+            legend: {
+                enabled: true
+            },
+
+           plotOptions: {
+                series: {
+                    borderWidth: 0,
+                    dataLabels: {
+                    enabled: true,
+                    format: '{point.y:.2f}'
+                    }
+                }
+            }
+        });
+
+
+        Highcharts.chart('containerArea', {
+            chart: {
+                type: 'area'
+            },
+            title: {
+                text: ''
+            },
+            subtitle: {
+                text: ''
+            },
+            xAxis: {
+                categories: listaAnos,
+                tickmarkPlacement: 'on',
+                title: {
+                    enabled: false
+                }
+            },
+            yAxis: {
+                title: {
+                    text: 'Valores (R$)'
+                },
+                labels: {
+                    formatter: function () {
+                        return this.value / 1000;
+                    }
+                }
+            },
+            
+            plotOptions: {
+                series: {
+                    borderWidth: 0,
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.y:.2f}'
+                    }
+                }
+            },
+            series: [{
+                name: 'Receitas',
+                data: listaReceitas
+            }, {
+                name: 'Despesas',
+                data: listaDespesas
+            }]
+        });
+    
+
+    }
+
+
+    function validarDatas(dataInicial, dataFinal) {
+
+
+        if (dataInicial == '') {
+            alert("Data Inicial Obrigatória!");
+            return false;
+        }
+
+        if (dataFinal == '') {
+            alert("Data Final Obrigatória!");
+            return false;
+        }
+
+        if (funcValidaData(dataInicial) == false) {
+            alert("Data Inicial Inválida!");
+            return false;
+        }
+
+        if (funcValidaData(dataFinal) == false) {
+            alert("Data Final Inválida!");
+            return false;
+        }
+
+        var data_1 = new Date(dataInicial);
+        var data_2 = new Date(dataFinal);
+
+        if (data_1 > data_2) {
+            alert("Data inicial não pode ser maior que a data final");
+            return false;
+        }
+
+        return true;
+    }
+
+    function funcValidaData(strData) {
+        var data = strData;
+        var dia = data.substring(0, 2)
+        var mes = data.substring(3, 5)
+        var ano = data.substring(6, 10)
+
+        //Criando um objeto Date usando os valores ano, mes e dia.
+        var novaData = new Date(ano, (mes - 1), dia);
+
+        var mesmoDia = parseInt(dia, 10) == parseInt(novaData.getDate());
+        var mesmoMes = parseInt(mes, 10) == parseInt(novaData.getMonth()) + 1;
+        var mesmoAno = parseInt(ano) == parseInt(novaData.getFullYear());
+
+        if (!((mesmoDia) && (mesmoMes) && (mesmoAno))) {
+            return false;
+        }
+        return true;
+    }
+
+</script>
+
+<!-- page content -->
+<div role="main">
+    <div class="">
+        <div class="clearfix"></div>
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="x_panel">
+                    <div class="col-sm-4" style="height:70px"><h3><i class="fa fa-list-alt"></i> Dashboard - Comparativo por anos</h3></div>
+                    <div class="col-sm-6">
+                        De: <input type='text' id="anoInicial" name="anoInicial" />
+                        Até <input type='text' id="anoFinal" name="anoFinal" />&nbsp;&nbsp;&nbsp;&nbsp;
+
+                        <button type="button" class="btn btn-default" id="pesquisarDashboard" name="pesquisarDashboard">
+                            <span class="glyphicon glyphicon-search"></span> Pesquisar
+                        </button>
+                    </div>
+
+                    <div class="col-sm-2">&nbsp;</div>
+
+                    <div class="x_content">
+                        <div class="row x_title">
+                            <div class="col-md-12"><div id="containerLine" style="min-width: 310px; height: 315px; margin: 0 auto"></div></div>
+                        </div><br /><br />
+                        <div class="row x_title">
+                            <div class="col-md-12"><div id="containerArea" style="min-width: 310px; height: 315px; margin: 0 auto"></div></div>
+                        </div>
+                       
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /page content -->
+

@@ -1,0 +1,433 @@
+﻿@{
+    ViewBag.Title = "Index";
+
+
+    IEnumerable<Financas.UI.WebMvc.ViewModels.DespesaFixaHomeViewModel> DespesasFixas = ViewBag.DespesasFixas;
+
+    int diaAtual = DateTime.Now.Day;
+
+}
+
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/Highcharts-5.0.6/highcharts.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/Highcharts-5.0.6/modules/data.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/Highcharts-5.0.6/modules/drilldown.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/Highcharts-5.0.6/modules/exporting.js")"></script>
+
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Scripts/bootstrap_datetimepicker/css/bootstrap-datetimepicker.css")">
+<script type="text/javascript" src="@Url.Content("~/Scripts/bootstrap_datetimepicker/js/moment-with-locales.js")"></script>
+<script type="text/javascript" src="@Url.Content("~/Scripts/bootstrap_datetimepicker/js/bootstrap-datetimepicker.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/jquery.mask.js")"></script>
+
+<script>
+
+    $(document).ready(function () {
+
+        Number.prototype.formatMoney = function (c, d, t) {
+            var n = this, c = isNaN(c = Math.abs(c)) ? 2 : c, d = d == undefined ? "," : d, t = t == undefined ? "." : t, s = n < 0 ? "-" : "", i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", j = (j = i.length) > 3 ? j % 3 : 0;
+            return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+        };
+
+
+        $('#datetimepicker').datetimepicker({
+            viewMode: 'years',
+            format: 'MM/YYYY',
+            locale: 'pt'
+        }).on('dp.update', function (ev) {
+
+            var mes = $("#mesanoOrcamento").val().substring(0, 2);
+
+            var ano = $("#mesanoOrcamento").val().substring(3, 7);
+
+            CarregarDashboard(mes, ano);
+
+        });
+
+
+        $('#mesanoOrcamento').mask('00/0000');
+
+
+        SetValoresPadrao();
+
+
+
+    });
+
+
+    function EscreverMesAnoDescritivo(mes, ano) {
+
+        mes = mes.toString();
+        ano = ano.toString();
+
+        var mesDescritivo = "";
+        var result = "";
+
+        switch (mes) {
+
+            case "01":
+                mesDescritivo = "Janeiro";
+                break;
+
+            case "02":
+                mesDescritivo = "Fevereiro";
+                break;
+
+            case "03":
+                mesDescritivo = "Março";
+                break;
+
+            case "04":
+                mesDescritivo = "Abril";
+                break;
+
+            case "05":
+                mesDescritivo = "Maio";
+                break;
+
+            case "06":
+                mesDescritivo = "Junho";
+                break;
+
+            case "07":
+                mesDescritivo = "Julho";
+                break;
+
+            case "08":
+                mesDescritivo = "Agosto";
+                break;
+
+            case "09":
+                mesDescritivo = "Setembro";
+                break;
+
+            case "10":
+                mesDescritivo = "Outubro";
+                break;
+
+            case "11":
+                mesDescritivo = "Novembro";
+                break;
+
+            case "12":
+                mesDescritivo = "Dezembro";
+                break;
+        }
+
+        result = mesDescritivo + " de " + ano;
+
+        $("#mesanoDescritivo").html(result);
+        $("#mesanoDescritivo").css({ fontSize: "25px" });
+        $("#mesanoDescritivo").css("font-weight", "bold")
+
+    }
+
+
+    function SetValoresPadrao() {
+
+        var data = new Date();
+        var mes = data.getMonth() + 1;
+        mes = (mes < 10 ? '0' : '') + mes;
+        var ano = data.getFullYear();
+
+        $('[id="mesanoOrcamento"]').val(mes + "/" + ano);
+
+        CarregarDashboard(mes, ano);
+    }
+
+    function CarregarDashboard(mes, ano) {
+
+        if (mes != '' && ano != '') {
+
+            EscreverMesAnoDescritivo(mes, ano);
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Content("~/Dashboard/ObterDashboardHome?ano=")" + ano + "&mes=" + mes,
+                dataType: "json",
+                beforeSend: function () {
+
+                    $('#wait').show();
+                },
+                success: function (response) {
+
+                    $('#wait').hide();
+
+                    $("#saldoInicial").html(response.SaldoInicial.formatMoney(2, ',', '.'));
+                    $("#totalReceitas").html(response.TotalReceitas.formatMoney(2, ',', '.'));
+                    $("#totalDespesas").html(response.TotalDespesas.formatMoney(2, ',', '.'));
+                    $("#saldoAtual").html(response.SaldoAtual.formatMoney(2, ',', '.'));
+
+
+                    if (response.SaldoInicial < 0)
+                        $("#saldoInicial").addClass("count red");
+                    else
+                        $("#saldoInicial").addClass("count green");
+
+
+                    if (response.SaldoAtual < 0)
+                        $("#saldoAtual").addClass("count red");
+                    else
+                        $("#saldoAtual").addClass("count green");
+
+
+                    CarregarHighcharts(response.ReceitasMeses, response.DespesasMeses, response.DespesasDiarioPaiViewModel, response.DespesasFilhaViewModelString, mes, ano);
+
+                },
+                failure: function (response) {
+                    alert(response.responseText);
+                },
+                error: function (response) {
+                    alert(response.responseText);
+                }
+            });
+        }
+    }
+
+
+    function CarregarHighcharts(ReceitasMeses, DespesasMeses, listaDespesasPai, listaDespesasFilhaString, mes, ano) {
+
+        var jsonDespesasFilha = JSON.parse(listaDespesasFilhaString);
+
+        Highcharts.setOptions({
+            lang: {
+                decimalPoint: ',',
+                thousandsSep: ' '
+            }
+        });
+
+
+        // Create the chart
+        Highcharts.chart('containerLine', {
+            chart: {
+                type: 'column'
+            },
+            title: {
+                text: ''
+            },
+            subtitle: {
+                text: ''
+            },
+            xAxis: {
+                type: 'category'
+            },
+            yAxis: {
+                title: {
+                    text: 'Valores (R$)'
+                }
+
+            },
+            legend: {
+                enabled: false
+            },
+            plotOptions: {
+                series: {
+                    borderWidth: 0,
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.y:.2f}'
+                    }
+                }
+            },
+
+            tooltip: {
+                headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+                pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f}</b><br/>'
+            },
+
+            series: [{
+                name: 'Brands',
+                colorByPoint: true,
+                data: listaDespesasPai
+            }],
+            drilldown: {
+                series: jsonDespesasFilha
+            }
+        });
+
+        Highcharts.chart('containerColumn', {
+            exporting: {
+                enabled: false
+            },
+            credits: {
+                enabled: false
+            },
+            chart: {
+                type: 'areaspline'
+            },
+            title: {
+                text: 'Comparativo receitas x despesas - ' + ano
+            },
+            xAxis: {
+                categories: [
+                    'Janeiro',
+                    'Fevereiro',
+                    'Março',
+                    'Abril',
+                    'Maio',
+                    'Junho',
+                    'Julho',
+                    'Agosto',
+                    'Setembro',
+                    'Outubro',
+                    'Novembro',
+                    'Dezembro'
+                ]
+            },
+            yAxis: {
+                title: {
+                    text: 'Valores'
+                }
+            },
+            tooltip: {
+                shared: true,
+                valueSuffix: ''
+            },
+            credits: {
+                enabled: false
+            },
+            plotOptions: {
+                areaspline: {
+                    fillOpacity: 0.5
+                }
+            },
+            series: [{
+                name: 'Receita',
+                data: ReceitasMeses
+            }, {
+                name: 'Despesa',
+                data: DespesasMeses
+            }]
+        });
+
+
+    }
+
+</script>
+
+<!-- page content -->
+<div role="main">
+    <!-- top tiles -->
+    <div class="row tile_count">
+        <div class="col-md-3 col-sm-4 col-xs-6 tile_stats_count">
+            <span class="count_top"><i class="fa fa-usd"></i> Saldo início do mês</span>
+            <div class="count" id="saldoInicial"></div>
+        </div>
+        <div class="col-md-3 col-sm-4 col-xs-6 tile_stats_count">
+            <span class="count_top"><i class="fa fa-usd"></i> Total das receitas</span>
+            <div class="count green" id="totalReceitas"></div>
+        </div>
+        <div class="col-md-3 col-sm-4 col-xs-6 tile_stats_count">
+            <span class="count_top"><i class="fa fa-usd"></i> Total das despesas</span>
+            <div class="count red" id="totalDespesas"></div>
+        </div>
+        <div class="col-md-3 col-sm-4 col-xs-6 tile_stats_count">
+            <span class="count_top"><i class="fa fa-usd"></i> Saldo atual</span>
+            <div class="count" id="saldoAtual"></div>
+        </div>
+    </div>
+    <!-- /top tiles -->
+    <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="dashboard_graph">
+                <div class="row x_title">
+                    <div class="col-md-5">
+                        
+                    </div>
+                    <div class="col-md-5" id="mesanoDescritivo">
+                    </div>
+                    <div class="col-md-2">
+                        <div class='input-group date' id='datetimepicker'>
+                            <input type='text' id="mesanoOrcamento" class="form-control" />
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar">
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row x_title">
+                    <div class="col-md-12"><div id="containerLine" style="min-width: 310px; height: 315px; margin: 0 auto"></div></div>
+                </div>
+                <div class="row x_title">
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                        <div id="containerColumn" style="min-width: 310px; height: 315px; margin: 0 auto"></div>
+                    </div>
+                    <div class="col-md-2 col-sm-2 col-xs-12 bg-white">
+                        <div class="x_title">
+                            <h2 style="margin-left:35px"><i class="fa fa-lock"></i> Despesas Fixas <i class="fa fa-usd"></i></h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="dashboard-widget-content">
+                                <ul class="quick-list">
+                                    @foreach (var item in DespesasFixas)
+                                    {
+                                        <li>
+                                            <i class="fa fa-usd"></i>
+                                            @if (diaAtual == item.DespesaVencto)
+                                            {
+                                                <font color="red" style="font-size:11px"><b>@item.DespesaVencto - @item.CategoriaDescricao (@item.DespesaValor)</b></font>
+                                            }
+                                            else
+                                            {
+                                                <font style="font-size:11px">
+                                                    <b>@item.DespesaVencto - @item.CategoriaDescricao (@item.DespesaValor)</b>
+                                                </font>
+                                            }
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="wait" style="display: none; width: 100%; height: 100%; top: 100px; left: 0px; position: fixed; z-index: 10000; text-align: center;">
+    <img src="~/Content/imagens/ajax-loader.gif" width="45" height="45" alt="Loading..." style="position: fixed; top: 50%; left: 50%;" />
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

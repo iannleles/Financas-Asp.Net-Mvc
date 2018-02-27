@@ -1,0 +1,163 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Finanças - Controle financeiro pessoal</title>
+    <!-- Bootstrap -->
+    <link href="@Url.Content("~/Scripts/Admin/vendors/bootstrap/dist/css/bootstrap.min.css")" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="@Url.Content("~/Scripts/Admin/vendors/font-awesome/css/font-awesome.min.css")" rel="stylesheet">
+    <!-- Custom Theme Style -->
+    <link href="@Url.Content("~/Scripts/Admin/build/css/custom.min.css")" rel="stylesheet">
+    <!-- jQuery -->
+    <script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/jquery-1.10.2.min.js")"></script>
+    <!-- Bootstrap -->
+    <script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/bootstrap.min.js")"></script>
+
+</head>
+@{
+  
+    var imagemUsuario = Model.Id.ToString() + ".jpg";
+}
+<body class="nav-md">
+    <div class="container body">
+        <div class="main_container">
+            <div class="col-md-3 left_col">
+                <div class="left_col scroll-view">
+                    <div class="navbar nav_title" style="border: 0;">
+                        <a href="@Url.Action("Index","Dashboard")" class="site_title"><i class="fa fa-usd"></i> <span>Finanças</span></a>
+                    </div>
+                    <div class="clearfix"></div>
+                    <!-- menu profile quick info -->
+                    <div class="profile">
+                        <div class="profile_pic">
+                            <img src="~/Content/usuarios/@imagemUsuario" alt="..." class="img-circle profile_img">
+                        </div>
+                        <div class="profile_info">
+                            <span>Seja bem-vindo,</span>
+                            <h2>@Model.Nome</h2>
+                        </div>
+                    </div>
+                    <!-- /menu profile quick info -->
+                    <br />
+                    <!-- sidebar menu -->
+                    <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+                        <div class="menu_section">
+                            <h3>&nbsp;</h3>
+                            <ul class="nav side-menu">
+                                <li>
+                                    <a><i class="fa fa-home"></i> Home <span class="fa fa-chevron-down"></span></a>
+                                    <ul class="nav child_menu">
+                                        <li>@Html.ActionLink("Dashboard", "Home", "Dashboard")</li>
+                                        <li>@Html.ActionLink("Lançamentos", "Index", "Lancamento")</li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <a><i class="fa fa-edit"></i> Categorias <span class="fa fa-chevron-down"></span></a>
+                                    <ul class="nav child_menu">
+                                        <li>@Html.ActionLink("Receitas", "Receitas", "Categoria")</li>
+                                        <li>@Html.ActionLink("Despesas", "Despesas", "Categoria")</li>
+                                        <li>@Html.ActionLink("Organização", "Organizacao", "Categoria")</li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <a><i class="fa fa-desktop"></i>Despesas<span class="fa fa-chevron-down"></span></a>
+                                    <ul class="nav child_menu">
+                                        <li>@Html.ActionLink("Fixas", "Index", "Despesa")</li>
+                                        <li>@Html.ActionLink("Orçamento", "Index", "Orcamento")</li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <a><i class="fa fa-table"></i> Relatórios <span class="fa fa-chevron-down"></span></a>
+                                    <ul class="nav child_menu">
+                                        <li>@Html.ActionLink("Previsto X Realizado", "PrevistoRealizado", "Relatorio")</li>
+                                        <li>@Html.ActionLink("Lançamentos por período", "LancamentosPeriodo", "Relatorio")</li>
+                                        <li>@Html.ActionLink("Lancamentos por meses", "LancamentosMeses", "Relatorio")</li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <a><i class="fa fa-table"></i> Dashboards <span class="fa fa-chevron-down"></span></a>
+                                    <ul class="nav child_menu">
+                                        <li>@Html.ActionLink("Comparativo por dias", "ReceitasDespesasDiario", "Dashboard")</li>
+                                        <li>@Html.ActionLink("Comparativo por meses", "ReceitasDespesasMeses", "Dashboard")</li>
+                                        <li>@Html.ActionLink("Comparativo por anos", "ReceitasDespesasAnos", "Dashboard")</li>
+                                        <li>@Html.ActionLink("Previsto X Realizado", "PrevistoRealizado", "Dashboard")</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+
+                    </div>
+                    <!-- /sidebar menu -->
+                    <!-- /menu footer buttons -->
+                    <div class="sidebar-footer hidden-small">
+                        <a data-toggle="tooltip" data-placement="top" title="Settings">
+                            <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
+                        </a>
+                        <a data-toggle="tooltip" data-placement="top" title="FullScreen">
+                            <span class="glyphicon glyphicon-fullscreen" aria-hidden="true"></span>
+                        </a>
+                        <a data-toggle="tooltip" data-placement="top" title="Lock">
+                            <span class="glyphicon glyphicon-eye-close" aria-hidden="true"></span>
+                        </a>
+                        <a data-toggle="tooltip" data-placement="top" title="Logout">
+                            <span class="glyphicon glyphicon-off" aria-hidden="true"></span>
+                        </a>
+                    </div>
+                    <!-- /menu footer buttons -->
+                </div>
+            </div>
+            <!-- top navigation -->
+            <div class="top_nav">
+                <div class="nav_menu">
+                    <nav>
+                        <div class="nav toggle">
+                            <a id="menu_toggle"><i class="fa fa-bars"></i></a>
+                        </div>
+                        <div class="nav toggle" id="menuAtivo"></div>
+
+                        <ul class="nav navbar-nav navbar-right">
+                            <li class="">
+                                <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                    <img src="~/Content/usuarios/@imagemUsuario" alt="">@Model.Nome
+                                    <span class=" fa fa-angle-down"></span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-usermenu pull-right">
+                                    <li><a href="javascript:;"> Profile</a></li>
+                                    <li>
+                                        <a href="javascript:;">
+
+                                            <span>Settings</span>
+                                        </a>
+                                    </li>
+                                    <li><a href="javascript:;">Help</a></li>
+                                    <li><a href="@Url.Action("Logout", "Account")"><i class="fa fa-sign-out pull-right"></i> Log Out</a></li>
+                                </ul>
+                            </li>
+
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            <!-- /top navigation -->
+            <!-- page content -->
+            <div class="right_col" role="main">
+
+                @RenderBody()
+
+            </div>
+        </div>
+        <!-- /page content -->
+        <!-- footer content -->
+        <footer></footer>
+        <!-- /footer content -->
+    </div>
+    <!-- Custom Theme ~/Scripts -->
+    <script src="~/Scripts/Admin/build/js/custom.min.js"></script>
+</body>
+</html>
+

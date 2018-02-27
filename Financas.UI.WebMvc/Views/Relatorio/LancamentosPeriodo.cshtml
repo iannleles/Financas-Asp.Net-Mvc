@@ -1,0 +1,408 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Scripts/bootstrap_datetimepicker/css/bootstrap-datetimepicker.css")">
+<script type="text/javascript" src="@Url.Content("~/Scripts/bootstrap_datetimepicker/js/moment-with-locales.js")"></script>
+<script type="text/javascript" src="@Url.Content("~/Scripts/bootstrap_datetimepicker/js/bootstrap-datetimepicker.js")"></script>
+
+
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Content/DataTables/css/dataTables.bootstrap.min.css")">
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/jquery.validate.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/jquery.dataTables.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/dataTables.bootstrap.min.js")"></script>
+
+
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/dataTables.buttons.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/buttons.flash.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/jszip/2.5.0/jszip.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/pdfmake/0.1.18/pdfmake.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/pdfmake/0.1.18/vfs_fonts.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/buttons.html5.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/DataTables/buttons.print.min.js")"></script>
+
+
+
+<script src="@Url.Content("~/Scripts/script.helper.js")"></script>
+<script src="@Url.Content("~/Scripts/bootstrap_dialog/bootstrap-dialog.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/jquery.mask.js")"></script>
+
+<script src="@Url.Content("~/Scripts/bootstrap-select.min.js")"></script>
+<link href="~/Content/bootstrap-select.min.css" rel="stylesheet" />
+
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Content/DataTables/css/buttons.dataTables.css")">
+
+<style media="all" type="text/css">
+    .alignCenter {
+        text-align: center;
+    }
+
+    #tblLancamentos tr td {
+        height: 5px;
+    }
+
+    .btn {
+        margin-bottom: 0px;
+    }
+
+    span.arrow {
+        margin-left: 6px;
+        height: 17px;
+    }
+
+    label.error {
+        margin-left: 9px;
+        padding: 1px 5px 0px 5px;
+        font-size: small;
+    }
+</style>
+
+
+
+
+
+
+<script>
+    var table;
+
+    $(document).ready(function () {
+
+
+        $('#modal_form').on('hidden.bs.modal', function () {
+            reload_table();
+        })
+
+        $('#dataInicial').mask('00/00/0000');
+        $('#dataFinal').mask('00/00/0000');
+
+        $(function () {
+            $('#dataInicial').datetimepicker({
+                locale: 'pt',
+                format: 'DD/MM/YYYY'
+            });
+        });
+
+        $(function () {
+            $('#dataFinal').datetimepicker({
+                locale: 'pt',
+                format: 'DD/MM/YYYY'
+            });
+        });
+
+        String.prototype.replaceAll = function (search, replacement) {
+            var target = this;
+            return target.replace(new RegExp(search, 'g'), replacement);
+        };
+
+        Number.prototype.formatMoney = function (c, d, t) {
+            var n = this, c = isNaN(c = Math.abs(c)) ? 2 : c, d = d == undefined ? "," : d, t = t == undefined ? "." : t, s = n < 0 ? "-" : "", i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", j = (j = i.length) > 3 ? j % 3 : 0;
+            return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+        };
+
+        $("#gerarRelatorio").click(function () {
+
+
+            var dataInicial = $('#dataInicial').val();
+            var dataFinal = $('#dataFinal').val();
+
+            if (validarDatas(dataInicial, dataFinal))
+                RefreshTable('#tblLancamentos', "@Url.Content("~/Relatorio/ProcessarLancamentosPeriodo?_dataInicial=")" + dataInicial + "&_dataFinal=" + dataFinal);
+
+        });
+
+        SetValoresPadrao();
+
+    });
+
+    function SetValoresPadrao() {
+
+        var data = new Date();
+        var dia = data.getDate();
+        var mes = data.getMonth() + 1;
+        var ano = data.getFullYear();
+
+        var dataInicial = '1/' + mes + '/' + ano;
+        var dataFinal = dia + '/' + mes + '/' + ano;
+
+        $('#dataInicial').val(dataInicial);
+        $('#dataFinal').val(dataFinal);
+
+        CarregarGridLancamentos(dataInicial, dataFinal);
+
+
+    }
+
+    function RefreshTable(tableId, urlData) {
+        $.getJSON(urlData, null, function (json) {
+            table = $(tableId).dataTable();
+            oSettings = table.fnSettings();
+
+            CarregarSomatorias(json.iTotalReceitas, json.iTotalDespesas, json.iSaldoMensal, json.iSaldoInicioMes, json.iSaldoFinalMes);
+
+            table.fnClearTable(this);
+
+            for (var i = 0; i < json.aaData.length; i++) {
+                table.oApi._fnAddData(oSettings, json.aaData[i]);
+            }
+
+            oSettings.aiDisplay = oSettings.aiDisplayMaster.slice();
+            table.fnDraw();
+        });
+    }
+
+    function validarDatas(dataInicial, dataFinal) {
+
+
+        if (dataInicial == '') {
+            alert("Data Inicial Obrigatória!");
+            return false;
+        }
+
+        if (dataFinal == '') {
+            alert("Data Final Obrigatória!");
+            return false;
+        }
+
+        if (funcValidaData(dataInicial) == false) {
+            alert("Data Inicial Inválida!");
+            return false;
+        }
+
+        if (funcValidaData(dataFinal) == false) {
+            alert("Data Final Inválida!");
+            return false;
+        }
+
+        var data_1 = new Date(dataInicial);
+        var data_2 = new Date(dataFinal);
+
+        if (data_1 > data_2) {
+            alert("Data inicial não pode ser maior que a data final");
+            return false;
+        }
+
+        return true;
+    }
+
+    function funcValidaData(strData) {
+        var data = strData;
+        var dia = data.substring(0, 2)
+        var mes = data.substring(3, 5)
+        var ano = data.substring(6, 10)
+
+        //Criando um objeto Date usando os valores ano, mes e dia.
+        var novaData = new Date(ano, (mes - 1), dia);
+
+        var mesmoDia = parseInt(dia, 10) == parseInt(novaData.getDate());
+        var mesmoMes = parseInt(mes, 10) == parseInt(novaData.getMonth()) + 1;
+        var mesmoAno = parseInt(ano) == parseInt(novaData.getFullYear());
+
+        if (!((mesmoDia) && (mesmoMes) && (mesmoAno))) {
+            return false;
+        }
+        return true;
+    }
+
+    function CarregarSomatorias(totalReceitas, totalDespesas, saldoMensal, saldoInicioMes, saldoFinalMes) {
+
+        $("#totalReceitas").html(totalReceitas.formatMoney(2, ',', '.'));
+        $("#totalDespesas").html(totalDespesas.formatMoney(2, ',', '.'));
+        $("#saldoMensal").html(saldoMensal.formatMoney(2, ',', '.'));
+        $("#saldoInicioMes").html(saldoInicioMes.formatMoney(2, ',', '.'));
+        $("#saldoFinalMes").html(saldoFinalMes.formatMoney(2, ',', '.'));
+
+        if (totalDespesas > 0)
+            $("#totalDespesas").css("color", "red");
+        else
+            $("#totalDespesas").css("color", "black");
+
+        if (saldoMensal < 0)
+            $("#saldoMensal").css("color", "red");
+        else
+            $("#saldoMensal").css("color", "black");
+
+        if (saldoInicioMes < 0)
+            $("#saldoInicioMes").css("color", "red");
+        else
+            $("#saldoInicioMes").css("color", "black");
+
+        if (saldoFinalMes < 0)
+            $("#saldoFinalMes").css("color", "red");
+        else
+            $("#saldoFinalMes").css("color", "black");
+
+    }
+
+    function CarregarGridLancamentos(data_inicial, data_final) {
+
+        var dataInicialDescricao = data_inicial.replaceAll("/", "-");
+        var dataFinalDescricao = data_final.replaceAll("/", "-");
+
+        table = $("#tblLancamentos").DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+
+                {
+                    extend: 'copy'
+                },
+                 {
+                     extend: 'csv',
+                     title: 'Lancamento por periodo'
+                 },
+                 {
+                     extend: 'excel',
+                     title: 'Lancamento por periodo'
+                 },
+                 {
+                     extend: 'pdf',
+                     pageSize: 'A4',
+                     title: 'Lancamento por periodo'
+                 },
+                 {
+                     extend: 'print',
+                     pageSize: 'A4',
+                     title: 'Lancamento por periodo'
+                 }
+            ],
+            "ajax": {
+                "url": "@Url.Content("~/Relatorio/ProcessarLancamentosPeriodo?_dataInicial=")" + data_inicial + "&_dataFinal=" + data_final,
+                "dataSrc": function (json) {
+
+                    CarregarSomatorias(json.iTotalReceitas, json.iTotalDespesas, json.iSaldoMensal, json.iSaldoInicioMes, json.iSaldoFinalMes);
+
+                    return json.aaData;
+                }
+            },
+            "aoColumns": [
+                { "mData": "Data", "sClass": "alignCenter", "sWidth": "10%" },
+                { "mData": "Descricao", "sWidth": "30%" },
+                 {
+                     "render": function (data, type, row, meta) {
+                         if (row.Entrada > 0)
+                             return row.Entrada.formatMoney(2, ',', '.');
+                         else
+                             return "";
+                     }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                 },
+                 {
+                     "render": function (data, type, row, meta) {
+                         if (row.Saida > 0)
+                             return '<font color="red">' + row.Saida.formatMoney(2, ',', '.') + '</font>';
+                         else
+                             return "";
+                     }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                 },
+                {
+                    "render": function (data, type, row, meta) {
+                        if (row.Saldo < 0)
+                            return '<font color="red">' + row.Saldo.formatMoney(2, ',', '.') + '</font>';
+                        else
+                            return row.Saldo.formatMoney(2, ',', '.');
+
+                    }, "sWidth": "15%", "sClass": "alignCenter", "orderable": false
+                },
+            ],
+
+            language: {
+                "sEmptyTable": "Nenhum registro encontrado",
+                "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+                "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
+                "sInfoFiltered": "(Filtrados de _MAX_ registros)",
+                "sInfoPostFix": "",
+                "sInfoThousands": ".",
+                "sLengthMenu": "_MENU_ resultados por página",
+                "sLoadingRecords": "Carregando...",
+                "sProcessing": "Processando...",
+                "sZeroRecords": "Nenhum registro encontrado",
+                "sSearch": "Pesquisar",
+                "oPaginate": {
+                    "sNext": "Próximo",
+                    "sPrevious": "Anterior",
+                    "sFirst": "Primeiro",
+                    "sLast": "Último"
+                },
+                "oAria": {
+                    "sSortAscending": ": Ordenar colunas de forma ascendente",
+                    "sSortDescending": ": Ordenar colunas de forma descendente"
+                }
+            }
+        });
+    }
+
+
+
+</script>
+
+<!-- page content -->
+<div role="main">
+    <div class="">
+        <div class="clearfix"></div>
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="x_panel">
+                    <div class="col-sm-4" style="height:70px"><h2><i class="fa fa-list-alt"></i> Relatório - Lançamentos por período</h2></div>
+                    <div class="col-sm-6">
+                        De: <input type='text' id="dataInicial" name="dataInicial" /> 
+                        Até <input type='text' id="dataFinal" name="dataFinal" />&nbsp;&nbsp;&nbsp;&nbsp;
+     
+                        <button type="button" class="btn btn-default" id="gerarRelatorio" name="gerarRelatorio">
+                            <span class="glyphicon glyphicon-search"></span> Procurar
+                        </button>
+                    </div>
+
+                    <div class="col-sm-2">&nbsp;</div>
+            
+                    <div class="x_content">
+                        <table id="tblLancamentos" class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Descrição</th>
+                                    <th>Entrada</th>
+                                    <th>Saida</th>
+                                    <th>Saldo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyTable"></tbody>
+                        </table><br />
+                        <div>
+                            <table class="table table-inverse table-active">
+                                <thead>
+                                    <tr style='background-color: #696969;'>
+                                        <th colspan="2"><font color="white"><b>RESUMO GERAL</b></font></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th width="300px">( + ) Total de receitas:</th>
+                                        <td><div id="totalReceitas"></div></td>
+                                    </tr>
+                                    <tr>
+                                        <th>( - ) Total de despesas:</th>
+                                        <td><div id="totalDespesas"></div></td>
+                                    </tr>
+                                    <tr>
+                                        <th>( = ) Saldo (receitas - despesas):</th>
+                                        <td><div id="saldoMensal"></div></td>
+                                    </tr>
+                                    <tr>
+                                        <th>( + ) Saldo no início do mês:</th>
+                                        <td><div id="saldoInicioMes"></div></td>
+                                    </tr>
+                                    <tr>
+                                        <th><b>SALDO FINAL DO MÊS:</b></th>
+                                        <td><div id="saldoFinalMes"></div></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /page content -->

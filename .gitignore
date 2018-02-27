@@ -1,0 +1,15 @@
+/Financas.Application/bin
+/Financas.Application/obj
+/Financas.Common.Tests/bin
+/Financas.Common.Tests/obj
+/Financas.Domain/bin
+/Financas.Domain/obj
+/Financas.Domain.Tests/bin
+/Financas.Domain.Tests/obj
+/Financas.Infrastructure.Data/obj
+/Financas.Infrastructure.Data/bin
+/Financas.Infrastructure.IoC/bin
+/Financas.Infrastructure.IoC/obj
+/Financas.UI.WebMvc/bin
+/Financas.UI.WebMvc/obj
+/packages

@@ -1,0 +1,14 @@
+@import "icons/font-awesome/font-awesome.css";
+@import "icons/line-icons/line-icons.css";
+@import "icons/line-icons/simple-line-icons.css";
+@import "icons/rounded/style.css";
+@import "icons/octicons/octicons.css";
+@import "icons/weather/css/weather-icons.min.css";
+
+form label.error{
+    font:14px Tahoma,sans-serif;
+    color:#ED7476;
+    margin-left:5px;
+    display:inline;
+    font-weight: bold;
+}

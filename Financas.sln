@@ -1,0 +1,82 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1. User Interface", "1. User Interface", "{05C223CF-F378-40FA-9449-F8AF7EEB15A1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2. Application", "2. Application", "{A3FD5B49-1BD7-4DA2-869F-D35ACEEF615A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3. Domain", "3. Domain", "{E5F1F6BE-C221-4668-80DB-953B038239FB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4. Infrastructure", "4. Infrastructure", "{AE8A09D9-E1D7-4328-865C-FB596422E272}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Financas.Infrastructure.Data", "Financas.Infrastructure.Data\Financas.Infrastructure.Data.csproj", "{8237F659-3A56-4BC7-BD08-6ED2AA39E97C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Financas.Infrastructure.IoC", "Financas.Infrastructure.IoC\Financas.Infrastructure.IoC.csproj", "{64A97ABA-879C-4849-98D6-36E31DE3C542}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Financas.Domain", "Financas.Domain\Financas.Domain.csproj", "{E02CB188-1FD4-47E2-9B55-7958CC5FBF7A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Financas.Application", "Financas.Application\Financas.Application.csproj", "{EA65735D-09D0-446E-9B5F-EC4BA5652F77}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "5. Tests", "5. Tests", "{73685CD2-9FD4-4F77-9EDA-4F44F29C07E4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Financas.Domain.Tests", "Financas.Domain.Tests\Financas.Domain.Tests.csproj", "{B5EA1528-E49C-46F1-8013-9D145574305A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{44E4BBA2-6FCD-4919-8471-72B1A735ED65}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\packages.config = .nuget\packages.config
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Financas.Common.Tests", "Financas.Common.Tests\Financas.Common.Tests.csproj", "{AEF3906C-277A-4BF1-ADCF-7B02F431F0AB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Financas.UI.WebMvc", "Financas.UI.WebMvc\Financas.UI.WebMvc.csproj", "{8ECA50E0-DA46-470D-AAD0-C0CF7DCA6641}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8237F659-3A56-4BC7-BD08-6ED2AA39E97C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8237F659-3A56-4BC7-BD08-6ED2AA39E97C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8237F659-3A56-4BC7-BD08-6ED2AA39E97C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8237F659-3A56-4BC7-BD08-6ED2AA39E97C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64A97ABA-879C-4849-98D6-36E31DE3C542}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64A97ABA-879C-4849-98D6-36E31DE3C542}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64A97ABA-879C-4849-98D6-36E31DE3C542}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64A97ABA-879C-4849-98D6-36E31DE3C542}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E02CB188-1FD4-47E2-9B55-7958CC5FBF7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E02CB188-1FD4-47E2-9B55-7958CC5FBF7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E02CB188-1FD4-47E2-9B55-7958CC5FBF7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E02CB188-1FD4-47E2-9B55-7958CC5FBF7A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA65735D-09D0-446E-9B5F-EC4BA5652F77}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA65735D-09D0-446E-9B5F-EC4BA5652F77}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA65735D-09D0-446E-9B5F-EC4BA5652F77}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA65735D-09D0-446E-9B5F-EC4BA5652F77}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5EA1528-E49C-46F1-8013-9D145574305A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5EA1528-E49C-46F1-8013-9D145574305A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5EA1528-E49C-46F1-8013-9D145574305A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5EA1528-E49C-46F1-8013-9D145574305A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AEF3906C-277A-4BF1-ADCF-7B02F431F0AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AEF3906C-277A-4BF1-ADCF-7B02F431F0AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AEF3906C-277A-4BF1-ADCF-7B02F431F0AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AEF3906C-277A-4BF1-ADCF-7B02F431F0AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8ECA50E0-DA46-470D-AAD0-C0CF7DCA6641}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8ECA50E0-DA46-470D-AAD0-C0CF7DCA6641}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8ECA50E0-DA46-470D-AAD0-C0CF7DCA6641}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8ECA50E0-DA46-470D-AAD0-C0CF7DCA6641}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8237F659-3A56-4BC7-BD08-6ED2AA39E97C} = {AE8A09D9-E1D7-4328-865C-FB596422E272}
+		{64A97ABA-879C-4849-98D6-36E31DE3C542} = {AE8A09D9-E1D7-4328-865C-FB596422E272}
+		{E02CB188-1FD4-47E2-9B55-7958CC5FBF7A} = {E5F1F6BE-C221-4668-80DB-953B038239FB}
+		{EA65735D-09D0-446E-9B5F-EC4BA5652F77} = {A3FD5B49-1BD7-4DA2-869F-D35ACEEF615A}
+		{B5EA1528-E49C-46F1-8013-9D145574305A} = {73685CD2-9FD4-4F77-9EDA-4F44F29C07E4}
+		{AEF3906C-277A-4BF1-ADCF-7B02F431F0AB} = {73685CD2-9FD4-4F77-9EDA-4F44F29C07E4}
+		{8ECA50E0-DA46-470D-AAD0-C0CF7DCA6641} = {05C223CF-F378-40FA-9449-F8AF7EEB15A1}
+	EndGlobalSection
+EndGlobal

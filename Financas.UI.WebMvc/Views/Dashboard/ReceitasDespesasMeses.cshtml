@@ -1,0 +1,352 @@
+﻿
+@{
+    ViewBag.Title = "ComparativoAnosReceitaDespesa";
+}
+
+
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/Highcharts-5.0.6/highcharts.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/Highcharts-5.0.6/modules/data.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/Highcharts-5.0.6/modules/drilldown.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/Highcharts-5.0.6/modules/exporting.js")"></script>
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<link rel="stylesheet" type="text/css" href="@Url.Content("~/Scripts/bootstrap_datetimepicker/css/bootstrap-datetimepicker.css")">
+<script type="text/javascript" src="@Url.Content("~/Scripts/bootstrap_datetimepicker/js/moment-with-locales.js")"></script>
+<script type="text/javascript" src="@Url.Content("~/Scripts/bootstrap_datetimepicker/js/bootstrap-datetimepicker.js")"></script>
+
+
+<script src="@Url.Content("~/Scripts/script.helper.js")"></script>
+<script src="@Url.Content("~/Scripts/bootstrap_dialog/bootstrap-dialog.min.js")"></script>
+<script type="text/javascript" language="javascript" src="@Url.Content("~/Scripts/jquery.mask.js")"></script>
+
+<script src="@Url.Content("~/Scripts/bootstrap-select.min.js")"></script>
+<link href="~/Content/bootstrap-select.min.css" rel="stylesheet" />
+
+<style media="all" type="text/css">
+    .alignCenter {
+        text-align: center;
+    }
+
+    #tblLancamentos tr td {
+        height: 5px;
+    }
+
+    .btn {
+        margin-bottom: 0px;
+    }
+
+    span.arrow {
+        margin-left: 6px;
+        height: 17px;
+    }
+
+    label.error {
+        margin-left: 9px;
+        padding: 1px 5px 0px 5px;
+        font-size: small;
+    }
+</style>
+
+<script>
+    var table;
+
+    $(document).ready(function () {
+
+
+        $('#modal_form').on('hidden.bs.modal', function () {
+            reload_table();
+        })
+
+        $('#datetimepicker').datetimepicker({
+            viewMode: 'years',
+            format: 'YYYY',
+            locale: 'pt'
+        }).on('dp.update', function (ev) {
+
+            var ano = $("#anoDashboard").val().substring(0, 4);
+
+            CarregarDashboard(ano);
+
+        });
+
+
+        $('#anoDashboard').mask('0000');
+
+
+        Number.prototype.formatMoney = function (c, d, t) {
+            var n = this, c = isNaN(c = Math.abs(c)) ? 2 : c, d = d == undefined ? "," : d, t = t == undefined ? "." : t, s = n < 0 ? "-" : "", i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", j = (j = i.length) > 3 ? j % 3 : 0;
+            return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+        };
+
+
+
+        SetValoresPadrao();
+
+    });
+    function SetValoresPadrao() {
+
+        var data = new Date();
+        var ano = data.getFullYear();
+
+        $('[id="anoDashboard"]').val(ano);
+
+        CarregarDashboard(ano);
+    }
+
+
+    function CarregarDashboard(ano) {
+
+
+        $.ajax({
+            type: "POST",
+            url: "@Url.Content("~/Dashboard/ObterDashboardMeses?ano=")" + ano,
+            dataType: "json",
+            beforeSend: function () {
+
+                $('#wait').show();
+
+            },
+            success: function (response) {
+
+                $('#wait').hide();
+
+                CarregarHighcharts(response.Receitas, response.Despesas);
+
+            },
+            failure: function (response) {
+                alert(response.responseText);
+            },
+            error: function (response) {
+                alert(response.responseText);
+            }
+    });
+    }
+
+
+    function CarregarHighcharts(listaReceitas, listaDespesas) {
+
+        Highcharts.setOptions({
+            lang: {
+                decimalPoint: ',',
+                thousandsSep: ' '
+            }
+        });
+
+
+        Highcharts.chart('containerLine', {
+            chart: {
+                zoomType: 'xy'
+            },
+            title: {
+                text: ''
+            },
+            subtitle: {
+                text: ''
+            },
+            xAxis: [{
+                categories: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun','Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                crosshair: true
+            }],
+            yAxis: [{ // Primary yAxis
+                labels: {
+                    format: '',
+                    style: {
+                        color: Highcharts.getOptions().colors[1]
+                    }
+                },
+                title: {
+                    text: 'Valores (R$)',
+                    style: {
+                        color: Highcharts.getOptions().colors[1]
+                    }
+                }
+            }, { // Secondary yAxis
+                title: {
+                    text: 'Receitas',
+                    style: {
+                        color: Highcharts.getOptions().colors[0]
+                    }
+                },
+                labels: {
+                    format: '',
+                    style: {
+                        color: Highcharts.getOptions().colors[0]
+                    }
+                },
+                opposite: true
+            }],
+            tooltip: {
+                shared: true
+            },
+            legend: {
+                layout: 'vertical',
+                align: 'left',
+                x: 120,
+                verticalAlign: 'top',
+                y: 100,
+                floating: true,
+                backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
+            },
+            series: [{
+                name: 'Receitas',
+                type: 'column',
+                yAxis: 1,
+                data: listaReceitas,
+                tooltip: {
+                    valueSuffix: ''
+                }
+
+            }, {
+                name: 'Despesas',
+                type: 'spline',
+                data: listaDespesas,
+                tooltip: {
+                    valueSuffix: ''
+                }
+            }]
+        });
+
+
+        Highcharts.chart('containerArea', {
+            chart: {
+                type: 'line'
+            },
+            title: {
+                text: ''
+            },
+            subtitle: {
+                text: ''
+            },
+            xAxis: {
+                categories: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+            },
+            yAxis: {
+                title: {
+                    text: 'Valores (R$)'
+                }
+            },
+            plotOptions: {
+                line: {
+                    dataLabels: {
+                        enabled: false
+                    },
+                    enableMouseTracking: true
+                }
+            },
+
+            series: [{
+                name: 'Receitas',
+                data: listaReceitas
+            }, {
+                name: 'Despesas',
+                data: listaDespesas
+            }]
+        });
+
+
+    
+
+    }
+
+
+    function validarDatas(dataInicial, dataFinal) {
+
+
+        if (dataInicial == '') {
+            alert("Data Inicial Obrigatória!");
+            return false;
+        }
+
+        if (dataFinal == '') {
+            alert("Data Final Obrigatória!");
+            return false;
+        }
+
+        if (funcValidaData(dataInicial) == false) {
+            alert("Data Inicial Inválida!");
+            return false;
+        }
+
+        if (funcValidaData(dataFinal) == false) {
+            alert("Data Final Inválida!");
+            return false;
+        }
+
+        var data_1 = new Date(dataInicial);
+        var data_2 = new Date(dataFinal);
+
+        if (data_1 > data_2) {
+            alert("Data inicial não pode ser maior que a data final");
+            return false;
+        }
+
+        return true;
+    }
+
+    function funcValidaData(strData) {
+        var data = strData;
+        var dia = data.substring(0, 2)
+        var mes = data.substring(3, 5)
+        var ano = data.substring(6, 10)
+
+        //Criando um objeto Date usando os valores ano, mes e dia.
+        var novaData = new Date(ano, (mes - 1), dia);
+
+        var mesmoDia = parseInt(dia, 10) == parseInt(novaData.getDate());
+        var mesmoMes = parseInt(mes, 10) == parseInt(novaData.getMonth()) + 1;
+        var mesmoAno = parseInt(ano) == parseInt(novaData.getFullYear());
+
+        if (!((mesmoDia) && (mesmoMes) && (mesmoAno))) {
+            return false;
+        }
+        return true;
+    }
+
+</script>
+
+<!-- page content -->
+<div role="main">
+    <div class="">
+        <div class="clearfix"></div>
+
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="dashboard_graph">
+                    <div class="row x_title">
+                        <div class="col-md-5">
+                            <h3><i class="fa fa-list-alt"></i> Dashboard - Comparativo por mês</h3>
+                        </div>
+                        <div class="col-md-5" id="mesanoDescritivo">
+                        </div>
+                        <div class="col-md-2">
+                            <div class='input-group date' id='datetimepicker'>
+                                <input type='text' id="anoDashboard" class="form-control" />
+                                <span class="input-group-addon">
+                                    <span class="glyphicon glyphicon-calendar">
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row x_title">
+                        <div class="col-md-12"><div id="containerLine" style="min-width: 310px; height: 315px; margin: 0 auto"></div></div>
+                    </div><br /><br />
+                    <div class="row x_title">
+                        <div class="col-md-12"><div id="containerArea" style="min-width: 310px; height: 315px; margin: 0 auto"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<!-- /page content -->
+
+<div id="wait" style="display: none; width: 100%; height: 100%; top: 100px; left: 0px; position: fixed; z-index: 10000; text-align: center;">
+    <img src="~/Content/imagens/ajax-loader.gif" width="45" height="45" alt="Loading..." style="position: fixed; top: 50%; left: 50%;" />
+</div>
