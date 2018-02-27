@@ -16,7 +16,7 @@ Este projeto utiliza:
 
 Para implementações neste projeto será necessário configurar o ambiente seguindo as etapas abaixo.
 
-### Baixe o Microsoft SQL Server 2014 express e SQL Server 2014 Management Studio
+### Baixe o Microsoft SQL Server express e SQL Server Management Studio
 
 Baixe e instale a partir do link https://www.microsoft.com/pt-br/download/details.aspx?id=42299
 
