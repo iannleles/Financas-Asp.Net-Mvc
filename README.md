@@ -39,3 +39,10 @@ Financas\Financas.Infrastructure.Data\ScriptsDataBase
 03. PROCEDURE
 
 
+### Demonstração do sistema
+
+Url: http://financas.gearhostpreview.com
+
+E-mail: demofinancas@gmail.com
+
+Senha: 123456
